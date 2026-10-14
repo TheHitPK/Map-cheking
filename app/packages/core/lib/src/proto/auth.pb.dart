@@ -1,20 +1,17 @@
-// This is a generated file - do not edit.
 //
-// Generated from auth.proto.
-
-// @dart = 3.3
+//  Generated code. Do not modify.
+//  source: auth.proto
+//
+// @dart = 2.12
 
 // ignore_for_file: annotate_overrides, camel_case_types, comment_references
-// ignore_for_file: constant_identifier_names
-// ignore_for_file: curly_braces_in_flow_control_structures
-// ignore_for_file: deprecated_member_use_from_same_package, library_prefixes
-// ignore_for_file: non_constant_identifier_names, prefer_relative_imports
+// ignore_for_file: constant_identifier_names, library_prefixes
+// ignore_for_file: non_constant_identifier_names, prefer_final_fields
+// ignore_for_file: unnecessary_import, unnecessary_this, unused_import
 
 import 'dart:core' as $core;
 
 import 'package:protobuf/protobuf.dart' as $pb;
-
-export 'package:protobuf/protobuf.dart' show GeneratedMessageGenericExtensions;
 
 /// POST /auth/chofer
 class DriverLogin extends $pb.GeneratedMessage {
@@ -23,79 +20,76 @@ class DriverLogin extends $pb.GeneratedMessage {
     $core.String? pin,
     $core.String? line,
   }) {
-    final result = DriverLogin._();
-    if (veh != null) result.veh = veh;
-    if (pin != null) result.pin = pin;
-    if (line != null) result.line = line;
-    return result;
+    final $result = create();
+    if (veh != null) {
+      $result.veh = veh;
+    }
+    if (pin != null) {
+      $result.pin = pin;
+    }
+    if (line != null) {
+      $result.line = line;
+    }
+    return $result;
   }
+  DriverLogin._() : super();
+  factory DriverLogin.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory DriverLogin.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  DriverLogin._();
-
-  factory DriverLogin.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      DriverLogin()..mergeFromBuffer(data, registry);
-  factory DriverLogin.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      DriverLogin()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'DriverLogin',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'transmcbo.v1'),
-      createEmptyInstance: DriverLogin.$_createMessage)
-    ..aI(1, _omitFieldNames ? '' : 'veh', fieldType: $pb.PbFieldType.OU3)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'DriverLogin', package: const $pb.PackageName(_omitMessageNames ? '' : 'transmcbo.v1'), createEmptyInstance: create)
+    ..a<$core.int>(1, _omitFieldNames ? '' : 'veh', $pb.PbFieldType.OU3)
     ..aOS(2, _omitFieldNames ? '' : 'pin')
     ..aOS(3, _omitFieldNames ? '' : 'line')
-    ..hasRequiredFields = false;
+    ..hasRequiredFields = false
+  ;
 
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DriverLogin clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  DriverLogin copyWith(void Function(DriverLogin) updates) =>
-      super.copyWith((message) => updates(message as DriverLogin))
-          as DriverLogin;
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  DriverLogin clone() => DriverLogin()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  DriverLogin copyWith(void Function(DriverLogin) updates) => super.copyWith((message) => updates(message as DriverLogin)) as DriverLogin;
 
-  @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  @$core.Deprecated('Use DriverLogin() / DriverLogin.new instead')
   static DriverLogin create() => DriverLogin._();
-  static $pb.GeneratedMessage $_createMessage() => DriverLogin._();
-  @$core.override
-  DriverLogin createEmptyInstance() => DriverLogin._();
+  DriverLogin createEmptyInstance() => create();
+  static $pb.PbList<DriverLogin> createRepeated() => $pb.PbList<DriverLogin>();
   @$core.pragma('dart2js:noInline')
-  static DriverLogin getDefault() =>
-      _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DriverLogin>(
-          DriverLogin.$_createMessage);
+  static DriverLogin getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<DriverLogin>(create);
   static DriverLogin? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.int get veh => $_getIZ(0);
   @$pb.TagNumber(1)
-  set veh($core.int value) => $_setUnsignedInt32(0, value);
+  set veh($core.int v) { $_setUnsignedInt32(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasVeh() => $_has(0);
   @$pb.TagNumber(1)
-  void clearVeh() => $_clearField(1);
+  void clearVeh() => clearField(1);
 
   @$pb.TagNumber(2)
   $core.String get pin => $_getSZ(1);
   @$pb.TagNumber(2)
-  set pin($core.String value) => $_setString(1, value);
+  set pin($core.String v) { $_setString(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasPin() => $_has(1);
   @$pb.TagNumber(2)
-  void clearPin() => $_clearField(2);
+  void clearPin() => clearField(2);
 
   @$pb.TagNumber(3)
   $core.String get line => $_getSZ(2);
   @$pb.TagNumber(3)
-  set line($core.String value) => $_setString(2, value);
+  set line($core.String v) { $_setString(2, v); }
   @$pb.TagNumber(3)
   $core.bool hasLine() => $_has(2);
   @$pb.TagNumber(3)
-  void clearLine() => $_clearField(3);
+  void clearLine() => clearField(3);
 }
 
 /// Response of POST /auth/chofer and /auth/pasajero. Use `jwt` as the MQTT password.
@@ -104,69 +98,65 @@ class Token extends $pb.GeneratedMessage {
     $core.String? jwt,
     $core.int? exp,
   }) {
-    final result = Token._();
-    if (jwt != null) result.jwt = jwt;
-    if (exp != null) result.exp = exp;
-    return result;
+    final $result = create();
+    if (jwt != null) {
+      $result.jwt = jwt;
+    }
+    if (exp != null) {
+      $result.exp = exp;
+    }
+    return $result;
   }
+  Token._() : super();
+  factory Token.fromBuffer($core.List<$core.int> i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromBuffer(i, r);
+  factory Token.fromJson($core.String i, [$pb.ExtensionRegistry r = $pb.ExtensionRegistry.EMPTY]) => create()..mergeFromJson(i, r);
 
-  Token._();
-
-  factory Token.fromBuffer($core.List<$core.int> data,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      Token()..mergeFromBuffer(data, registry);
-  factory Token.fromJson($core.String json,
-          [$pb.ExtensionRegistry registry = $pb.ExtensionRegistry.EMPTY]) =>
-      Token()..mergeFromJson(json, registry);
-
-  static final $pb.BuilderInfo _i = $pb.BuilderInfo(
-      _omitMessageNames ? '' : 'Token',
-      package: const $pb.PackageName(_omitMessageNames ? '' : 'transmcbo.v1'),
-      createEmptyInstance: Token.$_createMessage)
+  static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Token', package: const $pb.PackageName(_omitMessageNames ? '' : 'transmcbo.v1'), createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'jwt')
-    ..aI(2, _omitFieldNames ? '' : 'exp', fieldType: $pb.PbFieldType.OU3)
-    ..hasRequiredFields = false;
+    ..a<$core.int>(2, _omitFieldNames ? '' : 'exp', $pb.PbFieldType.OU3)
+    ..hasRequiredFields = false
+  ;
 
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Token clone() => deepCopy();
-  @$core.Deprecated('See https://github.com/google/protobuf.dart/issues/998.')
-  Token copyWith(void Function(Token) updates) =>
-      super.copyWith((message) => updates(message as Token)) as Token;
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.deepCopy] instead. '
+  'Will be removed in next major version')
+  Token clone() => Token()..mergeFromMessage(this);
+  @$core.Deprecated(
+  'Using this can add significant overhead to your binary. '
+  'Use [GeneratedMessageGenericExtensions.rebuild] instead. '
+  'Will be removed in next major version')
+  Token copyWith(void Function(Token) updates) => super.copyWith((message) => updates(message as Token)) as Token;
 
-  @$core.override
   $pb.BuilderInfo get info_ => _i;
 
   @$core.pragma('dart2js:noInline')
-  @$core.Deprecated('Use Token() / Token.new instead')
   static Token create() => Token._();
-  static $pb.GeneratedMessage $_createMessage() => Token._();
-  @$core.override
-  Token createEmptyInstance() => Token._();
+  Token createEmptyInstance() => create();
+  static $pb.PbList<Token> createRepeated() => $pb.PbList<Token>();
   @$core.pragma('dart2js:noInline')
-  static Token getDefault() => _defaultInstance ??=
-      $pb.GeneratedMessage.$_defaultFor<Token>(Token.$_createMessage);
+  static Token getDefault() => _defaultInstance ??= $pb.GeneratedMessage.$_defaultFor<Token>(create);
   static Token? _defaultInstance;
 
   @$pb.TagNumber(1)
   $core.String get jwt => $_getSZ(0);
   @$pb.TagNumber(1)
-  set jwt($core.String value) => $_setString(0, value);
+  set jwt($core.String v) { $_setString(0, v); }
   @$pb.TagNumber(1)
   $core.bool hasJwt() => $_has(0);
   @$pb.TagNumber(1)
-  void clearJwt() => $_clearField(1);
+  void clearJwt() => clearField(1);
 
   @$pb.TagNumber(2)
   $core.int get exp => $_getIZ(1);
   @$pb.TagNumber(2)
-  set exp($core.int value) => $_setUnsignedInt32(1, value);
+  set exp($core.int v) { $_setUnsignedInt32(1, v); }
   @$pb.TagNumber(2)
   $core.bool hasExp() => $_has(1);
   @$pb.TagNumber(2)
-  void clearExp() => $_clearField(2);
+  void clearExp() => clearField(2);
 }
 
-const $core.bool _omitFieldNames =
-    $core.bool.fromEnvironment('protobuf.omit_field_names');
-const $core.bool _omitMessageNames =
-    $core.bool.fromEnvironment('protobuf.omit_message_names');
+
+const _omitFieldNames = $core.bool.fromEnvironment('protobuf.omit_field_names');
+const _omitMessageNames = $core.bool.fromEnvironment('protobuf.omit_message_names');

@@ -8,6 +8,7 @@ import 'package:typed_data/typed_data.dart' as typed;
 
 import '../driver/driver_session.dart';
 import '../net/data_usage.dart';
+import '../passenger/passenger_session.dart';
 
 class MqttLinkMessage {
   const MqttLinkMessage(this.topic, this.payload, {required this.retained});
@@ -25,7 +26,7 @@ class MqttLinkMessage {
 /// - Topic Alias: the first publish to a topic on a connection carries the topic and an alias,
 ///   later ones only the alias (mqtt5_client does not do this by itself);
 /// - no library auto-reconnect: the JWT may have expired, so the app reconnects with a fresh token.
-class MqttLink implements LivePublisher {
+class MqttLink implements LivePublisher, LiveFeed {
   MqttLink({
     required this.host,
     this.port = 1883,
@@ -50,6 +51,7 @@ class MqttLink implements LivePublisher {
   final Map<String, int> _aliases = {};
   int _aliasMax = 0;
 
+  @override
   Stream<MqttLinkMessage> get messages => _messages.stream;
 
   /// Fires when the connection drops (network, broker, token expiry). Not fired by [disconnect].
@@ -84,9 +86,9 @@ class MqttLink implements LivePublisher {
     _client = c;
     _disconnectHook = () => userDisconnect = true;
 
-    usage.mqttTx += 14 + clientId.length + username.length + jwt.length + (willTopic == null ? 0 : willTopic.length + 4);
+    usage.mqttTx += connectBytes(clientId: clientId, username: username, jwt: jwt, willTopic: willTopic);
     final status = await c.connect();
-    usage.mqttRx += 8;
+    usage.mqttRx += connAckBytes;
     if (status?.state != MqttConnectionState.connected) {
       _client = null;
       throw MqttLinkException('connect failed: ${status?.reasonCode}');
@@ -126,14 +128,16 @@ class MqttLink implements LivePublisher {
     usage.mqttTx += 2 + 1 + topicBytes + payload.length; // fixed header + properties length + topic + payload
   }
 
+  @override
   Future<void> subscribe(String topic) async {
     final c = _client;
     if (c == null || !connected) throw const MqttLinkException('not connected');
     c.subscribe(topic, MqttQos.atMostOnce);
-    usage.mqttTx += 8 + topic.length;
+    usage.mqttTx += subscribeBytes(topic);
     usage.mqttRx += 6;
   }
 
+  @override
   void unsubscribe(String topic) {
     final c = _client;
     if (c == null || !connected) return;
@@ -155,6 +159,13 @@ class MqttLink implements LivePublisher {
     }
   }
 
+  // Approximate wire sizes, shared with the data-budget test.
+  static int connectBytes({required String clientId, required String username, required String jwt, String? willTopic}) =>
+      14 + clientId.length + username.length + jwt.length + (willTopic == null ? 0 : willTopic.length + 4);
+  static const connAckBytes = 8;
+  static int subscribeBytes(String topic) => 8 + topic.length;
+  static int incomingPublishBytes(String topic, int payloadLength) => 2 + 2 + topic.length + 1 + payloadLength;
+
   Future<void> dispose() async {
     await disconnect();
     await _messages.close();
@@ -167,7 +178,7 @@ class MqttLink implements LivePublisher {
       if (pub is! MqttPublishMessage) continue;
       final bytes = Uint8List.fromList(pub.payload.message?.toList() ?? const []);
       final topic = m.topic ?? pub.variableHeader?.topicName ?? '';
-      usage.mqttRx += 2 + 2 + topic.length + 1 + bytes.length;
+      usage.mqttRx += incomingPublishBytes(topic, bytes.length);
       _messages.add(MqttLinkMessage(topic, bytes, retained: pub.header?.retain ?? false));
     }
   }

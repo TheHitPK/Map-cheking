@@ -5,6 +5,7 @@ import 'dart:typed_data';
 import '../geo/geo.dart';
 import '../proto/api.pb.dart';
 import '../proto/auth.pb.dart';
+import '../passenger/passenger_session.dart';
 import 'data_usage.dart';
 
 class ApiException implements Exception {
@@ -18,7 +19,7 @@ class ApiException implements Exception {
 }
 
 /// Backend HTTP client. Protobuf bodies, gzip handled here so [usage] sees the real wire size.
-class ApiClient {
+class ApiClient implements PassengerApi {
   ApiClient(this.baseUri, {HttpClient? http, DataUsage? usage, this.timeout = const Duration(seconds: 10)})
       : _http = (http ?? HttpClient())..autoUncompress = false,
         usage = usage ?? DataUsage();
@@ -49,6 +50,7 @@ class ApiClient {
 
   String? get linesEtag => _linesEtag;
 
+  @override
   Future<List<Nearby>> nearby(String line, GeoPoint user) async {
     final path = '/lineas/${Uri.encodeComponent(line)}/cercanos';
     final res = await _send('GET', path, query: {'lat': '${user.lat}', 'lon': '${user.lon}'});
@@ -57,6 +59,7 @@ class ApiClient {
   }
 
   /// Null when the vehicle is no longer live (404) or no road route exists (422).
+  @override
   Future<Route?> route(int veh, GeoPoint user) async {
     final res = await _send('GET', '/ruta', query: {'veh': '$veh', 'lat': '${user.lat}', 'lon': '${user.lon}'});
     if (res.status == HttpStatus.notFound || res.status == HttpStatus.unprocessableEntity) return null;

@@ -13,7 +13,7 @@ dependencies:
   flutter:
     sdk: flutter
   mqtt5_client: ^5.1.0
-  protobuf: ^6.1.0
+  protobuf: ^3.1.0
   typed_data: ^1.4.0
 
 dev_dependencies:

@@ -47,3 +47,6 @@ class LocalProjection {
 
   (double x, double y) toXY(GeoPoint p) => ((p.lon - _lon0) * _kx, (p.lat - _lat0) * _ky);
 }
+
+/// Service area (Maracaibo + San Francisco); must match Geo.MIN/MAX_LAT/LON in the backend.
+bool inServiceArea(GeoPoint p) => p.lat >= 10.40 && p.lat <= 10.95 && p.lon >= -72.0 && p.lon <= -71.40;

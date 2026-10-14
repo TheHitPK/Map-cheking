@@ -6,6 +6,7 @@ import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../common/lines_cache.dart';
 import '../config.dart';
 import 'driver_store.dart';
 import 'driver_task.dart';
@@ -73,6 +74,7 @@ class ChoferController extends Notifier<ChoferState> {
   late final AppDb _db = AppDb.open();
   late final DriverStore _store = DriverStore(_db);
   late final ApiClient _api = ApiClient(Uri.parse(AppConfig.apiUrl));
+  late final LinesCache _lines = LinesCache(_db, _api);
   double _taskKb = 0;
 
   @override
@@ -90,18 +92,16 @@ class ChoferController extends Notifier<ChoferState> {
   Future<void> _load() async {
     final creds = await _store.credentials();
     final line = await _store.line();
-    final cached = await _store.cachedLines();
-    if (cached != null) _api.restoreLines(cached.$1, cached.$2);
+    final cached = await _lines.cached();
     state = state.copyWith(
       loading: false,
       veh: creds?.veh,
       line: line,
-      lines: cached?.$1,
+      lines: cached,
       inService: await FlutterForegroundTask.isRunningService,
     );
     try {
-      final lines = await _api.lines();
-      if (_api.linesEtag != null) await _store.saveLines(lines, _api.linesEtag!);
+      final lines = await _lines.refresh();
       state = state.copyWith(lines: lines, kb: _kb);
     } catch (_) {
       if (state.lines.isEmpty) state = state.copyWith(error: 'Sin conexión: no se pudieron cargar las líneas');

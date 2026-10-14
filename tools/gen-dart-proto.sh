@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 # Generates Dart classes for proto/*.proto into app/packages/core/lib/src/proto.
 # Uses the protoc binary Maven already downloaded (backend build) and protoc_plugin:
-#   dart pub global activate protoc_plugin 25.1.0
+#   dart pub global activate protoc_plugin 21.1.2  (protobuf ^3: vector_map_tiles still requires it)
 set -euo pipefail
 
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"

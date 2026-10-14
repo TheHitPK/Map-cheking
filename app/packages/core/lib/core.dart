@@ -14,4 +14,5 @@ export 'src/geo/polyline.dart';
 export 'src/mqtt/mqtt_link.dart';
 export 'src/net/api_client.dart';
 export 'src/net/data_usage.dart';
+export 'src/passenger/passenger_session.dart';
 export 'src/protocol/protocol.dart';
