@@ -29,3 +29,10 @@ message Nearby {
 message NearbyList {
   repeated Nearby vehicles = 1;  // closest first, max 3
 }
+
+// GET /ruta?veh&lat&lon — road route from the vehicle to the passenger
+message Route {
+  string polyline = 1;  // Google encoded polyline, precision 1e5
+  uint32 dist_m = 2;
+  uint32 time_s = 3;
+}

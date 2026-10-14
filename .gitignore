@@ -21,9 +21,13 @@ out/
 
 # Map / routing data (large, generated)
 *.osm.pbf
+!backend/src/test/resources/osm/*.osm.pbf
 *.pmtiles
 graph-cache/
 
 # OS
 .DS_Store
 Thumbs.db
+
+# OSM downloads
+data/
