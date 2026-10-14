@@ -23,7 +23,7 @@ Render despliega desde un repositorio. Puede ser privado.
 ```sh
 # Crea un repositorio vacío "transmcbo" en GitHub (sin README) y luego:
 git remote add origin https://github.com/<tu-usuario>/transmcbo.git
-git push -u origin master
+git push -u origin main
 ```
 
 ## 2. Broker: EMQX Serverless
