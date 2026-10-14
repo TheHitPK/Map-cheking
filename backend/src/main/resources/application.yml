@@ -17,6 +17,15 @@ spring:
       host: ${REDIS_HOST:localhost}
       port: 6379
 
+transmcbo:
+  mqtt:
+    host: ${MQTT_HOST:localhost}
+    port: ${MQTT_PORT:1883}
+    username: ${MQTT_USERNAME:}
+    password: ${MQTT_PASSWORD:}
+  ingest:
+    history-capacity: 10000
+
 management:
   endpoints:
     web:
