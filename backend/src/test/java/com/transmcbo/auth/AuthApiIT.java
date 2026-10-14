@@ -82,6 +82,18 @@ class AuthApiIT {
     }
 
     @Test
+    void repeatedWrongPinsAreThrottled() throws Exception {
+        jdbc.update("INSERT INTO vehicle (id, pin_hash) VALUES (8, ?) ON CONFLICT DO NOTHING", PinHasher.hash("1111"));
+        for (int i = 0; i < LoginLimiter.MAX_PER_VEH; i++) {
+            assertThat(post("/auth/chofer", login(8, "0000", "santa-rosa")).statusCode()).isEqualTo(401);
+        }
+        HttpResponse<byte[]> blocked = post("/auth/chofer", login(8, "1111", "santa-rosa"));
+
+        assertThat(blocked.statusCode()).as("even with the right PIN").isEqualTo(429);
+        assertThat(blocked.headers().firstValue("Retry-After")).hasValue("900");
+    }
+
+    @Test
     void passengerGetsReadOnlyToken() throws Exception {
         HttpResponse<byte[]> res = post("/auth/pasajero", new byte[0]);
 

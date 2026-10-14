@@ -10,6 +10,7 @@ FIXTURE_DIR="$ROOT/backend/src/test/resources/osm"
 SOURCE_URL="https://download.geofabrik.de/south-america/venezuela-latest.osm.pbf"
 # Must match Geo.MIN/MAX_LAT/LON in the backend: minlon,minlat,maxlon,maxlat
 SERVICE_BBOX="-72.0,10.40,-71.40,10.95"
+MARGIN_BBOX="-72.1,10.30,-71.30,11.05"
 # Small piece of downtown Maracaibo for integration tests
 FIXTURE_BBOX="-71.635,10.635,-71.600,10.665"
 
@@ -31,8 +32,11 @@ docker run --rm \
       curl -fsSL -o venezuela-latest.osm.pbf '$SOURCE_URL'
       md5sum -c venezuela-latest.osm.pbf.md5
     fi
-    osmium extract --overwrite --strategy simple -b '$SERVICE_BBOX' /data/venezuela-latest.osm.pbf -o /data/maracaibo.osm.pbf
-    osmium extract --overwrite --strategy simple -b '$FIXTURE_BBOX' /data/maracaibo.osm.pbf -o /fixture/maracaibo-centro.osm.pbf
+    # Two steps keep memory low (Docker may have ~2 GB): a cheap 'simple' cut with a margin,
+    # then 'complete_ways' on the small file so roads crossing the border stay whole.
+    osmium extract --overwrite --strategy simple -b '$MARGIN_BBOX' venezuela-latest.osm.pbf -o /tmp/margin.osm.pbf
+    osmium extract --overwrite --strategy complete_ways -b '$SERVICE_BBOX' /tmp/margin.osm.pbf -o maracaibo.osm.pbf
+    osmium extract --overwrite --strategy complete_ways -b '$FIXTURE_BBOX' maracaibo.osm.pbf -o /fixture/maracaibo-centro.osm.pbf
   "
 
 for f in "$DATA/maracaibo.osm.pbf" "$FIXTURE_DIR/maracaibo-centro.osm.pbf"; do

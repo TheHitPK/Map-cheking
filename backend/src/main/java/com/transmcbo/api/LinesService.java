@@ -38,6 +38,7 @@ public class LinesService {
                 .build();
         byte[] body = lines.toByteArray();
         Set<String> ids = lines.getLinesList().stream().map(Line::getId).collect(Collectors.toUnmodifiableSet());
-        return new Snapshot(body, "\"" + DigestUtils.md5DigestAsHex(body) + "\"", ids);
+        // Weak ETag: Tomcat never gzips a response carrying a strong one.
+        return new Snapshot(body, "W/\"" + DigestUtils.md5DigestAsHex(body) + "\"", ids);
     }
 }
