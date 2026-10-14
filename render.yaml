@@ -1,0 +1,63 @@
+# Render Blueprint (free plan): backend + Postgres (PostGIS) + Key Value. Broker: EMQX Serverless (see DEPLOY.md).
+services:
+  - type: web
+    name: transmcbo-api
+    runtime: docker
+    plan: free
+    region: virginia
+    dockerfilePath: ./backend/Dockerfile
+    dockerContext: .
+    healthCheckPath: /actuator/health
+    autoDeploy: true
+    envVars:
+      - key: POSTGRES_HOST
+        fromDatabase:
+          name: transmcbo-db
+          property: host
+      - key: POSTGRES_PORT
+        fromDatabase:
+          name: transmcbo-db
+          property: port
+      - key: POSTGRES_DB
+        fromDatabase:
+          name: transmcbo-db
+          property: database
+      - key: POSTGRES_USER
+        fromDatabase:
+          name: transmcbo-db
+          property: user
+      - key: POSTGRES_PASSWORD
+        fromDatabase:
+          name: transmcbo-db
+          property: password
+      - key: REDIS_URL
+        fromService:
+          type: keyvalue
+          name: transmcbo-kv
+          property: connectionString
+      - key: MQTT_JWT_SECRET
+        generateValue: true
+      # Set these in the dashboard (Environment) after creating the EMQX Serverless deployment:
+      - key: MQTT_HOST
+        sync: false
+      - key: MQTT_BACKEND_PASSWORD
+        sync: false
+      - key: MQTT_DRIVER_PASSWORD
+        sync: false
+      - key: MQTT_PASSENGER_PASSWORD
+        sync: false
+
+  - type: keyvalue
+    name: transmcbo-kv
+    plan: free
+    region: virginia
+    maxmemoryPolicy: noeviction
+    ipAllowList: [] # only reachable from inside Render
+
+databases:
+  - name: transmcbo-db
+    plan: free
+    region: virginia
+    databaseName: transmcbo
+    user: transmcbo
+    postgresMajorVersion: "16"

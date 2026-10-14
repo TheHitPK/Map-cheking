@@ -92,11 +92,15 @@ class DriverLogin extends $pb.GeneratedMessage {
   void clearLine() => clearField(3);
 }
 
-/// Response of POST /auth/chofer and /auth/pasajero. Use `jwt` as the MQTT password.
+/// Response of POST /auth/chofer and /auth/pasajero: how to connect to MQTT.
 class Token extends $pb.GeneratedMessage {
   factory Token({
     $core.String? jwt,
     $core.int? exp,
+    $core.String? username,
+    $core.String? mqttHost,
+    $core.int? mqttPort,
+    $core.bool? mqttTls,
   }) {
     final $result = create();
     if (jwt != null) {
@@ -104,6 +108,18 @@ class Token extends $pb.GeneratedMessage {
     }
     if (exp != null) {
       $result.exp = exp;
+    }
+    if (username != null) {
+      $result.username = username;
+    }
+    if (mqttHost != null) {
+      $result.mqttHost = mqttHost;
+    }
+    if (mqttPort != null) {
+      $result.mqttPort = mqttPort;
+    }
+    if (mqttTls != null) {
+      $result.mqttTls = mqttTls;
     }
     return $result;
   }
@@ -114,6 +130,10 @@ class Token extends $pb.GeneratedMessage {
   static final $pb.BuilderInfo _i = $pb.BuilderInfo(_omitMessageNames ? '' : 'Token', package: const $pb.PackageName(_omitMessageNames ? '' : 'transmcbo.v1'), createEmptyInstance: create)
     ..aOS(1, _omitFieldNames ? '' : 'jwt')
     ..a<$core.int>(2, _omitFieldNames ? '' : 'exp', $pb.PbFieldType.OU3)
+    ..aOS(3, _omitFieldNames ? '' : 'username')
+    ..aOS(4, _omitFieldNames ? '' : 'mqttHost')
+    ..a<$core.int>(5, _omitFieldNames ? '' : 'mqttPort', $pb.PbFieldType.OU3)
+    ..aOB(6, _omitFieldNames ? '' : 'mqttTls')
     ..hasRequiredFields = false
   ;
 
@@ -155,6 +175,42 @@ class Token extends $pb.GeneratedMessage {
   $core.bool hasExp() => $_has(1);
   @$pb.TagNumber(2)
   void clearExp() => clearField(2);
+
+  @$pb.TagNumber(3)
+  $core.String get username => $_getSZ(2);
+  @$pb.TagNumber(3)
+  set username($core.String v) { $_setString(2, v); }
+  @$pb.TagNumber(3)
+  $core.bool hasUsername() => $_has(2);
+  @$pb.TagNumber(3)
+  void clearUsername() => clearField(3);
+
+  @$pb.TagNumber(4)
+  $core.String get mqttHost => $_getSZ(3);
+  @$pb.TagNumber(4)
+  set mqttHost($core.String v) { $_setString(3, v); }
+  @$pb.TagNumber(4)
+  $core.bool hasMqttHost() => $_has(3);
+  @$pb.TagNumber(4)
+  void clearMqttHost() => clearField(4);
+
+  @$pb.TagNumber(5)
+  $core.int get mqttPort => $_getIZ(4);
+  @$pb.TagNumber(5)
+  set mqttPort($core.int v) { $_setUnsignedInt32(4, v); }
+  @$pb.TagNumber(5)
+  $core.bool hasMqttPort() => $_has(4);
+  @$pb.TagNumber(5)
+  void clearMqttPort() => clearField(5);
+
+  @$pb.TagNumber(6)
+  $core.bool get mqttTls => $_getBF(5);
+  @$pb.TagNumber(6)
+  set mqttTls($core.bool v) { $_setBool(5, v); }
+  @$pb.TagNumber(6)
+  $core.bool hasMqttTls() => $_has(5);
+  @$pb.TagNumber(6)
+  void clearMqttTls() => clearField(6);
 }
 
 

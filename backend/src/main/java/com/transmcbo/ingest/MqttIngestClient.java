@@ -10,6 +10,7 @@ import com.hivemq.client.mqtt.mqtt5.lifecycle.Mqtt5ClientDisconnectedContext;
 import com.hivemq.client.mqtt.mqtt5.message.connect.Mqtt5Connect;
 import com.transmcbo.auth.AuthProperties;
 import com.transmcbo.auth.TokenService;
+import com.transmcbo.proto.Token;
 import io.micrometer.core.instrument.Counter;
 import io.micrometer.core.instrument.MeterRegistry;
 import java.nio.charset.StandardCharsets;
@@ -127,10 +128,12 @@ public class MqttIngestClient implements SmartLifecycle {
     }
 
     private Mqtt5Connect connectMessage() {
+        Token token = tokens.backend();
+        String username = token.getUsername().isEmpty() ? "backend" : token.getUsername();
         return Mqtt5Connect.builder()
                 .keepAlive(120)
                 .cleanStart(true)
-                .simpleAuth().username("backend").password(tokens.backend().getJwt().getBytes(StandardCharsets.UTF_8)).applySimpleAuth()
+                .simpleAuth().username(username).password(token.getJwt().getBytes(StandardCharsets.UTF_8)).applySimpleAuth()
                 .build();
     }
 

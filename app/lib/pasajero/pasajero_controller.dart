@@ -156,7 +156,7 @@ class PasajeroController extends Notifier<PasajeroState> with WidgetsBindingObse
     if (_link.connected && exp != null && exp.difference(DateTime.now()) > tokenRenewBefore) return;
     final token = await _api.passengerToken();
     _tokenExp = DateTime.fromMillisecondsSinceEpoch(token.exp * 1000);
-    await _link.connect(jwt: token.jwt);
+    await _link.connectWith(token, fallbackUsername: 'u');
   }
 
   Future<void> _startSession() async {

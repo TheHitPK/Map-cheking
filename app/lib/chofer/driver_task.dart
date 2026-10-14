@@ -109,7 +109,7 @@ class DriverTaskHandler extends TaskHandler {
     _connecting = true;
     try {
       final token = await api.driverToken(veh: creds.veh, pin: creds.pin, line: session.line);
-      await link.connect(jwt: token.jwt, username: 'veh:${creds.veh}', willTopic: liveTopic(session.line, creds.veh));
+      await link.connectWith(token, fallbackUsername: 'veh:${creds.veh}', willTopic: liveTopic(session.line, creds.veh));
       _backoff = const Duration(seconds: 1);
       final exp = DateTime.fromMillisecondsSinceEpoch(token.exp * 1000);
       final renewIn = exp.difference(DateTime.now()) - tokenRenewBefore;

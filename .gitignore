@@ -31,8 +31,12 @@ graph-cache/
 Thumbs.db
 
 # OSM downloads
-data/
+data/*
+!data/maracaibo.osm.pbf
 
 # Dev TLS (tools/gen-dev-certs.sh)
 /certs/
 app/assets/certs/*.pem
+
+# Built APKs
+/release/

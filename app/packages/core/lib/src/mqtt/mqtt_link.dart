@@ -9,6 +9,7 @@ import 'package:typed_data/typed_data.dart' as typed;
 
 import '../driver/driver_session.dart';
 import '../net/data_usage.dart';
+import '../proto/auth.pb.dart';
 import '../passenger/passenger_session.dart';
 
 class MqttLinkMessage {
@@ -66,10 +67,18 @@ class MqttLink implements LivePublisher, LiveFeed {
   bool get connected => _client?.connectionStatus?.state == MqttConnectionState.connected;
 
   /// [willTopic]: on an ungraceful drop the broker publishes an empty retained payload there.
-  Future<void> connect({required String jwt, String username = 'u', String? willTopic}) async {
+  /// [host], [port] and [secure] override the constructor values for this connection (broker sent by the backend).
+  Future<void> connect({
+    required String jwt,
+    String username = 'u',
+    String? willTopic,
+    String? host,
+    int? port,
+    bool? secure,
+  }) async {
     await disconnect();
-    final c = _factory(host, clientId, port)
-      ..secure = secure
+    final c = _factory(host ?? this.host, clientId, port ?? this.port)
+      ..secure = secure ?? this.secure
       ..securityContext = securityContext ?? SecurityContext.defaultContext
       ..keepAlivePeriod = 120
       ..autoReconnect = false
@@ -93,7 +102,7 @@ class MqttLink implements LivePublisher, LiveFeed {
     _disconnectHook = () => userDisconnect = true;
 
     usage.mqttTx += connectBytes(clientId: clientId, username: username, jwt: jwt, willTopic: willTopic);
-    if (secure) {
+    if (c.secure) {
       usage.mqttTx += tlsHandshakeTxBytes;
       usage.mqttRx += tlsHandshakeRxBytes;
     }
@@ -109,6 +118,16 @@ class MqttLink implements LivePublisher, LiveFeed {
   }
 
   void Function()? _disconnectHook;
+
+  /// Connects with what /auth/* returned: password, username and broker (when the backend sends them).
+  Future<void> connectWith(Token token, {required String fallbackUsername, String? willTopic}) => connect(
+        jwt: token.jwt,
+        username: token.username.isEmpty ? fallbackUsername : token.username,
+        willTopic: willTopic,
+        host: token.mqttHost.isEmpty ? null : token.mqttHost,
+        port: token.mqttPort == 0 ? null : token.mqttPort,
+        secure: token.mqttHost.isEmpty ? null : token.mqttTls,
+      );
 
   /// QoS 0. Uses a Topic Alias when the broker allows it.
   @override

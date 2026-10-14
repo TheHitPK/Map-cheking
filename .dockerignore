@@ -1,0 +1,7 @@
+# Only backend/, proto/ and data/maracaibo.osm.pbf are needed (backend/Dockerfile).
+*
+!backend/
+!proto/
+!data/maracaibo.osm.pbf
+backend/target/
+backend/src/test/

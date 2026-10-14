@@ -34,10 +34,16 @@ const Token$json = {
   '2': [
     {'1': 'jwt', '3': 1, '4': 1, '5': 9, '10': 'jwt'},
     {'1': 'exp', '3': 2, '4': 1, '5': 13, '10': 'exp'},
+    {'1': 'username', '3': 3, '4': 1, '5': 9, '10': 'username'},
+    {'1': 'mqtt_host', '3': 4, '4': 1, '5': 9, '10': 'mqttHost'},
+    {'1': 'mqtt_port', '3': 5, '4': 1, '5': 13, '10': 'mqttPort'},
+    {'1': 'mqtt_tls', '3': 6, '4': 1, '5': 8, '10': 'mqttTls'},
   ],
 };
 
 /// Descriptor for `Token`. Decode as a `google.protobuf.DescriptorProto`.
 final $typed_data.Uint8List tokenDescriptor = $convert.base64Decode(
-    'CgVUb2tlbhIQCgNqd3QYASABKAlSA2p3dBIQCgNleHAYAiABKA1SA2V4cA==');
+    'CgVUb2tlbhIQCgNqd3QYASABKAlSA2p3dBIQCgNleHAYAiABKA1SA2V4cBIaCgh1c2VybmFtZR'
+    'gDIAEoCVIIdXNlcm5hbWUSGwoJbXF0dF9ob3N0GAQgASgJUghtcXR0SG9zdBIbCgltcXR0X3Bv'
+    'cnQYBSABKA1SCG1xdHRQb3J0EhkKCG1xdHRfdGxzGAYgASgIUgdtcXR0VGxz');
 
