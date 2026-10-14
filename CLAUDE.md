@@ -54,7 +54,8 @@ El pasajero ve en un mapa dónde va un carrito/bus de una línea, a qué distanc
   - velocidad EMA (α = 0.3, mínimo 8 km/h);
   - mostrar como rango ±25 %.
   - Desvío > 60 m en 2 lecturas seguidas → pedir ruta nueva.
-- Estado: riverpod. Persistencia: drift. Mostrar en modo debug los KB consumidos en la sesión.
+- MQTT: `mqtt5_client` (no `mqtt_client`, que solo es 3.1.1 y no tiene Topic Alias).
+- Estado: riverpod. Persistencia: drift (+ `drift_flutter`; `drift_dev`/`build_runner` solo dev). Mostrar en modo debug los KB consumidos en la sesión.
 
 ## Convenciones para Claude
 - Respuestas breves; no expliques lo obvio.
