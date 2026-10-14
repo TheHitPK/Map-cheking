@@ -1,0 +1,27 @@
+syntax = "proto3";
+
+package transmcbo.v1;
+
+option java_package = "com.transmcbo.proto";
+option java_multiple_files = true;
+
+// Live position published by the driver on topic v/{line}/{veh}. ~14 B on the wire.
+message Pos {
+  uint32 veh = 1;  // vehicle id
+  uint32 ts  = 2;  // unix epoch, seconds
+  sint32 lat = 3;  // degrees * 1e6
+  sint32 lon = 4;  // degrees * 1e6
+  uint32 spd = 5;  // km/h
+  uint32 hdg = 6;  // degrees / 2 (0..179)
+}
+
+// Points buffered while offline. `first` is absolute; point i (i >= 1) is
+// point i-1 plus the deltas at index i-1. All repeated fields have equal length.
+message PosBatch {
+  Pos first = 1;
+  repeated sint32 dts = 2;  // seconds since previous point
+  repeated sint32 dlat = 3; // degrees * 1e6
+  repeated sint32 dlon = 4; // degrees * 1e6
+  repeated uint32 spd = 5;  // absolute, km/h
+  repeated uint32 hdg = 6;  // absolute, degrees / 2
+}

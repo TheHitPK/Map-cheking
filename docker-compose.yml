@@ -1,0 +1,50 @@
+name: transmcbo
+
+services:
+  postgis:
+    image: postgis/postgis:16-3.4
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB}
+      POSTGRES_USER: ${POSTGRES_USER}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U $${POSTGRES_USER} -d $${POSTGRES_DB}"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  redis:
+    image: redis:7.4.1-alpine
+    command: ["redis-server", "--appendonly", "no", "--save", ""]
+    ports:
+      - "6379:6379"
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  emqx:
+    image: emqx/emqx:5.8.6
+    environment:
+      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD}
+      EMQX_MQTT__KEEPALIVE_MULTIPLIER: "1.5"
+    ports:
+      - "1883:1883"   # MQTT
+      - "8883:8883"   # MQTT over TLS
+      - "18083:18083" # dashboard
+    volumes:
+      - emqxdata:/opt/emqx/data
+    healthcheck:
+      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
+      interval: 10s
+      timeout: 5s
+      retries: 20
+
+volumes:
+  pgdata:
+  emqxdata:

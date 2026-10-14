@@ -1,0 +1,29 @@
+# Env
+.env
+
+# Java / Gradle
+.gradle/
+build/
+target/
+out/
+*.class
+.idea/
+*.iml
+
+# Flutter / Dart
+.dart_tool/
+.flutter-plugins
+.flutter-plugins-dependencies
+.packages
+.pub-cache/
+.pub/
+*.g.dart.bak
+
+# Map / routing data (large, generated)
+*.osm.pbf
+*.pmtiles
+graph-cache/
+
+# OS
+.DS_Store
+Thumbs.db
