@@ -34,5 +34,5 @@ Thumbs.db
 data/
 
 # Dev TLS (tools/gen-dev-certs.sh)
-certs/
+/certs/
 app/assets/certs/*.pem
