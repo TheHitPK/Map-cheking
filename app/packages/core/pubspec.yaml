@@ -9,6 +9,7 @@ environment:
 
 dependencies:
   drift: ^2.35.2
+  drift_flutter: ^0.3.1
   flutter:
     sdk: flutter
   mqtt5_client: ^5.1.0

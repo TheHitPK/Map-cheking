@@ -4,4 +4,6 @@
          to allow setting breakpoints, to provide hot reload, etc.
     -->
     <uses-permission android:name="android.permission.INTERNET"/>
+    <!-- Local backend/EMQX without TLS (http://10.0.2.2). Release builds must use HTTPS/TLS. -->
+    <application android:usesCleartextTraffic="true" />
 </manifest>

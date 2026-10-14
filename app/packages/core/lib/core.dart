@@ -4,6 +4,9 @@
 /// (import it with a prefix: `Route` would clash with Flutter's).
 library;
 
+export 'src/db/app_db.dart' show AppDb, QueuedFix;
+export 'src/driver/driver_session.dart';
+export 'src/driver/publish_policy.dart';
 export 'src/eta/eta_estimator.dart';
 export 'src/eta/route_snapper.dart';
 export 'src/geo/geo.dart';

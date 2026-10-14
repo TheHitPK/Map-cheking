@@ -6,6 +6,7 @@ import 'package:mqtt5_client/mqtt5_client.dart';
 import 'package:mqtt5_client/mqtt5_server_client.dart';
 import 'package:typed_data/typed_data.dart' as typed;
 
+import '../driver/driver_session.dart';
 import '../net/data_usage.dart';
 
 class MqttLinkMessage {
@@ -24,7 +25,7 @@ class MqttLinkMessage {
 /// - Topic Alias: the first publish to a topic on a connection carries the topic and an alias,
 ///   later ones only the alias (mqtt5_client does not do this by itself);
 /// - no library auto-reconnect: the JWT may have expired, so the app reconnects with a fresh token.
-class MqttLink {
+class MqttLink implements LivePublisher {
   MqttLink({
     required this.host,
     this.port = 1883,
@@ -54,6 +55,7 @@ class MqttLink {
   /// Fires when the connection drops (network, broker, token expiry). Not fired by [disconnect].
   Stream<void> get disconnects => _disconnects.stream;
 
+  @override
   bool get connected => _client?.connectionStatus?.state == MqttConnectionState.connected;
 
   /// [willTopic]: on an ungraceful drop the broker publishes an empty retained payload there.
@@ -66,7 +68,13 @@ class MqttLink {
       ..logging(on: false);
     var msg = MqttConnectMessage().withClientIdentifier(clientId).startClean().authenticateAs(username, jwt);
     if (willTopic != null) {
-      msg = msg.withWillTopic(willTopic).withWillPayload(typed.Uint8Buffer()).withWillRetain().withWillQos(MqttQos.atMostOnce);
+      // will() sets the Will flag; without it the Will QoS/Retain bits make the CONNECT malformed.
+      msg = msg
+          .will()
+          .withWillTopic(willTopic)
+          .withWillPayload(typed.Uint8Buffer())
+          .withWillRetain()
+          .withWillQos(MqttQos.atMostOnce);
     }
     c.connectionMessage = msg;
     var userDisconnect = false;
@@ -91,6 +99,7 @@ class MqttLink {
   void Function()? _disconnectHook;
 
   /// QoS 0. Uses a Topic Alias when the broker allows it.
+  @override
   void publish(String topic, List<int> payload, {bool retain = false}) {
     final c = _client;
     if (c == null || !connected) throw const MqttLinkException('not connected');

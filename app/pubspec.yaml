@@ -11,6 +11,9 @@ dependencies:
     path: packages/core
   flutter:
     sdk: flutter
+  flutter_foreground_task: ^11.0.3
+  flutter_riverpod: ^3.4.3
+  geolocator: ^14.1.1
 
 dev_dependencies:
   flutter_test:

@@ -5,7 +5,7 @@ spring:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:5432/${POSTGRES_DB:transmcbo}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5434}/${POSTGRES_DB:transmcbo}
     username: ${POSTGRES_USER:transmcbo}
     password: ${POSTGRES_PASSWORD:change-me}
   jpa:
