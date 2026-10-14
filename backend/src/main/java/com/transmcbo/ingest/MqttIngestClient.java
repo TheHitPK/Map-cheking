@@ -4,7 +4,9 @@ import com.hivemq.client.mqtt.MqttGlobalPublishFilter;
 import com.hivemq.client.mqtt.datatypes.MqttQos;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
-import com.hivemq.client.mqtt.mqtt5.Mqtt5ClientBuilder;
+import com.hivemq.client.mqtt.mqtt5.lifecycle.Mqtt5ClientDisconnectedContext;
+import com.hivemq.client.mqtt.mqtt5.message.connect.Mqtt5Connect;
+import com.transmcbo.auth.TokenService;
 import java.nio.charset.StandardCharsets;
 import java.util.UUID;
 import java.util.concurrent.TimeUnit;
@@ -23,34 +25,44 @@ public class MqttIngestClient implements SmartLifecycle {
 
     private final MqttProperties props;
     private final IngestHandler handler;
+    private final TokenService tokens;
     private Mqtt5AsyncClient client;
     private volatile boolean running;
 
-    public MqttIngestClient(MqttProperties props, IngestHandler handler) {
+    public MqttIngestClient(MqttProperties props, IngestHandler handler, TokenService tokens) {
         this.props = props;
         this.handler = handler;
+        this.tokens = tokens;
     }
 
     @Override
     public void start() {
-        Mqtt5ClientBuilder builder = Mqtt5Client.builder()
+        client = Mqtt5Client.builder()
                 .identifier(props.clientIdPrefix() + "-" + UUID.randomUUID().toString().substring(0, 8))
                 .serverHost(props.host())
                 .serverPort(props.port())
                 .automaticReconnect().initialDelay(1, TimeUnit.SECONDS).maxDelay(30, TimeUnit.SECONDS).applyAutomaticReconnect()
                 .addConnectedListener(ctx -> subscribe())
-                .addDisconnectedListener(ctx -> log.warn("MQTT disconnected: {}", ctx.getCause().getMessage()));
-        if (props.username() != null && !props.username().isBlank()) {
-            builder = builder.simpleAuth()
-                    .username(props.username())
-                    .password(props.password() == null ? new byte[0] : props.password().getBytes(StandardCharsets.UTF_8))
-                    .applySimpleAuth();
-        }
-        client = builder.buildAsync();
+                .addDisconnectedListener(ctx -> {
+                    log.warn("MQTT disconnected: {}", ctx.getCause().getMessage());
+                    // The token may have expired (EMQX disconnects at exp): reconnect with a fresh one.
+                    if (ctx instanceof Mqtt5ClientDisconnectedContext c5) {
+                        c5.getReconnector().connect(connectMessage());
+                    }
+                })
+                .buildAsync();
         client.publishes(MqttGlobalPublishFilter.SUBSCRIBED,
                 publish -> handler.onMessage(publish.getTopic().toString(), publish.getPayloadAsBytes()));
-        client.connectWith().keepAlive(120).cleanStart(true).send();
+        client.connect(connectMessage());
         running = true;
+    }
+
+    private Mqtt5Connect connectMessage() {
+        return Mqtt5Connect.builder()
+                .keepAlive(120)
+                .cleanStart(true)
+                .simpleAuth().username("backend").password(tokens.backend().getJwt().getBytes(StandardCharsets.UTF_8)).applySimpleAuth()
+                .build();
     }
 
     private void subscribe() {

@@ -33,6 +33,16 @@ services:
     environment:
       EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD}
       EMQX_MQTT__KEEPALIVE_MULTIPLIER: "1.5"
+      # JWT (HS256) issued by the backend, sent as the MQTT password. ACL comes from the `acl` claim.
+      EMQX_AUTHENTICATION__1__MECHANISM: jwt
+      EMQX_AUTHENTICATION__1__FROM: password
+      EMQX_AUTHENTICATION__1__USE_JWKS: "false"
+      EMQX_AUTHENTICATION__1__ALGORITHM: hmac-based
+      EMQX_AUTHENTICATION__1__SECRET: ${MQTT_JWT_SECRET}
+      EMQX_AUTHENTICATION__1__SECRET_BASE64_ENCODED: "false"
+      EMQX_AUTHENTICATION__1__DISCONNECT_AFTER_EXPIRE: "true"
+      EMQX_AUTHORIZATION__NO_MATCH: deny
+      EMQX_AUTHORIZATION__SOURCES: "[]"
     ports:
       - "1883:1883"   # MQTT
       - "8883:8883"   # MQTT over TLS

@@ -1,0 +1,19 @@
+syntax = "proto3";
+
+package transmcbo.v1;
+
+option java_package = "com.transmcbo.proto";
+option java_multiple_files = true;
+
+// POST /auth/chofer
+message DriverLogin {
+  uint32 veh = 1;
+  string pin = 2;
+  string line = 3;
+}
+
+// Response of POST /auth/chofer and /auth/pasajero. Use `jwt` as the MQTT password.
+message Token {
+  string jwt = 1;
+  uint32 exp = 2; // epoch seconds; EMQX disconnects the client at this time
+}

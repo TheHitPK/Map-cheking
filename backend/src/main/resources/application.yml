@@ -27,8 +27,11 @@ transmcbo:
   mqtt:
     host: ${MQTT_HOST:localhost}
     port: ${MQTT_PORT:1883}
-    username: ${MQTT_USERNAME:}
-    password: ${MQTT_PASSWORD:}
+  auth:
+    # Shared with EMQX's JWT authenticator. Dev default only; set MQTT_JWT_SECRET in production.
+    jwt-secret: ${MQTT_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    token-ttl: 1h
+    backend-token-ttl: 24h
   ingest:
     history-capacity: 10000
 

@@ -9,7 +9,5 @@ public record MqttProperties(
         @DefaultValue("localhost") String host,
         @DefaultValue("1883") int port,
         @DefaultValue("transmcbo-backend") String clientIdPrefix,
-        String username,
-        String password,
         @DefaultValue("$share/backend/v/#") String subscription) {
 }
