@@ -5,8 +5,6 @@ public final class PosValidator {
 
     public enum Verdict { OK, STALE, FUTURE, TOO_OLD, OUT_OF_AREA, TOO_FAST }
 
-    static final int MIN_LAT = 10_400_000, MAX_LAT = 10_950_000;   // Maracaibo + San Francisco
-    static final int MIN_LON = -72_000_000, MAX_LON = -71_400_000;
     static final double MAX_KMH = 120;
     static final double JITTER_M = 30;          // GPS noise tolerated before computing implied speed
     static final long MAX_FUTURE_S = 60;
@@ -28,7 +26,7 @@ public final class PosValidator {
         if (next.ts() > nowSec + MAX_FUTURE_S) {
             return Verdict.FUTURE;
         }
-        if (next.lat() < MIN_LAT || next.lat() > MAX_LAT || next.lon() < MIN_LON || next.lon() > MAX_LON) {
+        if (!Geo.inServiceArea(next.lat(), next.lon())) {
             return Verdict.OUT_OF_AREA;
         }
         if (next.spd() > MAX_KMH) {

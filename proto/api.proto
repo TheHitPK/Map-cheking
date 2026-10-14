@@ -1,0 +1,31 @@
+syntax = "proto3";
+
+package transmcbo.v1;
+
+option java_package = "com.transmcbo.proto";
+option java_multiple_files = true;
+
+// GET /lineas
+message Line {
+  string id = 1;
+  string name = 2;
+}
+
+message Lines {
+  repeated Line lines = 1;
+}
+
+// GET /lineas/{id}/cercanos
+message Nearby {
+  uint32 veh = 1;
+  uint32 ts = 2;      // epoch seconds of the last fix
+  sint32 lat = 3;     // degrees * 1e6
+  sint32 lon = 4;     // degrees * 1e6
+  uint32 spd = 5;     // km/h
+  uint32 hdg = 6;     // degrees / 2
+  uint32 dist_m = 7;  // straight-line distance to the passenger
+}
+
+message NearbyList {
+  repeated Nearby vehicles = 1;  // closest first, max 3
+}
