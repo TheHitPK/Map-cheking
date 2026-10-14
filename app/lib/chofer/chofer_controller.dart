@@ -7,6 +7,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../common/lines_cache.dart';
+import '../common/tls.dart';
 import '../config.dart';
 import 'driver_store.dart';
 import 'driver_task.dart';
@@ -73,7 +74,8 @@ final choferProvider = NotifierProvider<ChoferController, ChoferState>(ChoferCon
 class ChoferController extends Notifier<ChoferState> {
   late final AppDb _db = AppDb.open();
   late final DriverStore _store = DriverStore(_db);
-  late final ApiClient _api = ApiClient(Uri.parse(AppConfig.apiUrl));
+  ApiClient? _apiClient; // created in _load, once the TLS trust is known
+  ApiClient get _api => _apiClient!;
   late final LinesCache _lines = LinesCache(_db, _api);
   double _taskKb = 0;
 
@@ -82,7 +84,7 @@ class ChoferController extends Notifier<ChoferState> {
     FlutterForegroundTask.addTaskDataCallback(_onTaskData);
     ref.onDispose(() {
       FlutterForegroundTask.removeTaskDataCallback(_onTaskData);
-      _api.close();
+      _apiClient?.close();
       unawaited(_db.close());
     });
     unawaited(_load());
@@ -90,6 +92,7 @@ class ChoferController extends Notifier<ChoferState> {
   }
 
   Future<void> _load() async {
+    _apiClient = ApiClient(Uri.parse(AppConfig.apiUrl), http: httpClientFor(await uiSecurityContext(_db)));
     final creds = await _store.credentials();
     final line = await _store.line();
     final cached = await _lines.cached();
@@ -108,7 +111,7 @@ class ChoferController extends Notifier<ChoferState> {
     }
   }
 
-  double get _kb => _api.usage.totalKb + _taskKb;
+  double get _kb => (_apiClient?.usage.totalKb ?? 0) + _taskKb;
 
   void selectLine(String line) {
     if (state.inService) return;

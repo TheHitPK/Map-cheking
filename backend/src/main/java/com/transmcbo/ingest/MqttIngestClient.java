@@ -1,9 +1,11 @@
 package com.transmcbo.ingest;
 
+import com.hivemq.client.mqtt.MqttClientSslConfig;
 import com.hivemq.client.mqtt.MqttGlobalPublishFilter;
 import com.hivemq.client.mqtt.datatypes.MqttQos;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5AsyncClient;
 import com.hivemq.client.mqtt.mqtt5.Mqtt5Client;
+import com.hivemq.client.mqtt.mqtt5.Mqtt5ClientBuilder;
 import com.hivemq.client.mqtt.mqtt5.lifecycle.Mqtt5ClientDisconnectedContext;
 import com.hivemq.client.mqtt.mqtt5.message.connect.Mqtt5Connect;
 import com.transmcbo.auth.AuthProperties;
@@ -20,6 +22,7 @@ import java.util.concurrent.TimeUnit;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.boot.ssl.SslBundles;
 import org.springframework.context.SmartLifecycle;
 import org.springframework.stereotype.Component;
 
@@ -41,12 +44,18 @@ public class MqttIngestClient implements SmartLifecycle {
     private final TokenService tokens;
     private final Duration rotationPeriod;
     private final Counter rotations;
+    private final MqttClientSslConfig sslConfig;
     private ScheduledExecutorService rotator;
     private volatile Mqtt5AsyncClient client;
     private volatile boolean running;
 
     public MqttIngestClient(MqttProperties props, IngestHandler handler, TokenService tokens, AuthProperties auth,
-            MeterRegistry registry) {
+            MeterRegistry registry, SslBundles sslBundles) {
+        this.sslConfig = !props.tls() ? null
+                : props.sslBundle().isBlank() ? MqttClientSslConfig.builder().build() // JVM default trust (public CA)
+                : MqttClientSslConfig.builder()
+                        .trustManagerFactory(sslBundles.getBundle(props.sslBundle()).getManagers().getTrustManagerFactory())
+                        .build();
         this.props = props;
         this.handler = handler;
         this.tokens = tokens;
@@ -87,10 +96,14 @@ public class MqttIngestClient implements SmartLifecycle {
     /** {@code firstSubscribe} completes once the first subscription after connecting succeeds. */
     private Mqtt5AsyncClient newClient(CompletableFuture<Void> firstSubscribe) {
         Mqtt5AsyncClient[] self = new Mqtt5AsyncClient[1]; // listeners run after connect, when self[0] is set
-        Mqtt5AsyncClient c = Mqtt5Client.builder()
+        Mqtt5ClientBuilder builder = Mqtt5Client.builder()
                 .identifier(props.clientIdPrefix() + "-" + UUID.randomUUID().toString().substring(0, 8))
                 .serverHost(props.host())
-                .serverPort(props.port())
+                .serverPort(props.port());
+        if (sslConfig != null) {
+            builder = builder.sslConfig(sslConfig);
+        }
+        Mqtt5AsyncClient c = builder
                 .automaticReconnect().initialDelay(1, TimeUnit.SECONDS).maxDelay(30, TimeUnit.SECONDS).applyAutomaticReconnect()
                 .addConnectedListener(ctx -> subscribe(self[0]).whenComplete((v, e) -> {
                     if (e == null) {

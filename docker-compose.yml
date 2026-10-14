@@ -43,12 +43,24 @@ services:
       EMQX_AUTHENTICATION__1__DISCONNECT_AFTER_EXPIRE: "true"
       EMQX_AUTHORIZATION__NO_MATCH: deny
       EMQX_AUTHORIZATION__SOURCES: "[]"
+      # TLS on 8883 (certs from tools/gen-dev-certs.sh; a real certificate in production).
+      EMQX_LISTENERS__SSL__DEFAULT__BIND: "0.0.0.0:8883"
+      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__CERTFILE: /opt/emqx/etc/dev-certs/server.crt
+      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__KEYFILE: /opt/emqx/etc/dev-certs/server.key
+      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__CACERTFILE: /opt/emqx/etc/dev-certs/ca.crt
+      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__VERSIONS: '["tlsv1.3","tlsv1.2"]'
+      # Session resumption: works for TLS 1.2 clients (JVM backend). EMQX does not expose TLS 1.3 tickets and
+      # dart:io keeps no client session cache, so the apps pay a full ECDSA handshake (~1.5 KB) per connection.
+      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__REUSE_SESSIONS: "true"
+      # Plain MQTT only for local development; set MQTT_PLAIN=false in production.
+      EMQX_LISTENERS__TCP__DEFAULT__ENABLE: ${MQTT_PLAIN:-true}
     ports:
       - "1883:1883"   # MQTT
       - "8883:8883"   # MQTT over TLS
       - "18083:18083" # dashboard
     volumes:
       - emqxdata:/opt/emqx/data
+      - ./certs:/opt/emqx/etc/dev-certs:ro
     healthcheck:
       test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
       interval: 10s

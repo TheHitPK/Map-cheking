@@ -1,0 +1,25 @@
+# TLS profile: --spring.profiles.active=tls. HTTPS on 8443 and MQTT over TLS (8883).
+# Dev certificates: tools/gen-dev-certs.sh. In production point TLS_CERT/TLS_KEY to the real certificate
+# If the broker has a public certificate, set transmcbo.mqtt.ssl-bundle to "" to use the JVM trust store.
+server:
+  port: 8443
+  ssl:
+    bundle: server
+
+spring:
+  ssl:
+    bundle:
+      pem:
+        server:
+          keystore:
+            certificate: file:${TLS_CERT:../certs/server.crt}
+            private-key: file:${TLS_KEY:../certs/server.key}
+        mqtt:
+          truststore:
+            certificate: file:${TLS_CA:../certs/ca.crt}
+
+transmcbo:
+  mqtt:
+    port: ${MQTT_TLS_PORT:8883}
+    tls: true
+    ssl-bundle: mqtt

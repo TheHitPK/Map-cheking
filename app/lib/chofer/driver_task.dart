@@ -5,6 +5,7 @@ import 'package:core/core.dart';
 import 'package:flutter_foreground_task/flutter_foreground_task.dart';
 import 'package:geolocator/geolocator.dart';
 
+import '../common/tls.dart';
 import '../config.dart';
 import 'driver_store.dart';
 
@@ -43,11 +44,13 @@ class DriverTaskHandler extends TaskHandler {
       await FlutterForegroundTask.stopService();
       return;
     }
-    _api = ApiClient(Uri.parse(AppConfig.apiUrl), usage: usage);
+    final tls = await storedSecurityContext(db);
+    _api = ApiClient(Uri.parse(AppConfig.apiUrl), http: httpClientFor(tls), usage: usage);
     final link = _link = MqttLink(
       host: AppConfig.mqttHost,
       port: AppConfig.mqttPort,
       secure: AppConfig.mqttTls,
+      securityContext: tls,
       clientId: 'veh-${creds.veh}',
       usage: usage,
     );

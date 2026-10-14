@@ -1,0 +1,2 @@
+Test-only TLS material (never used outside tests): EC P-256, valid ~100 years.
+ca.crt signs server.crt (SAN localhost, 127.0.0.1); other-ca.crt is an unrelated CA for rejection tests.

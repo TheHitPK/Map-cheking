@@ -8,6 +8,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import 'package:geolocator/geolocator.dart';
 
 import '../common/lines_cache.dart';
+import '../common/tls.dart';
 import '../config.dart';
 
 /// Center of Maracaibo, used until the passenger's position is known.
@@ -61,15 +62,12 @@ class PasajeroController extends Notifier<PasajeroState> with WidgetsBindingObse
   static const tokenRenewBefore = Duration(minutes: 5);
 
   late final AppDb _db = AppDb.open();
-  late final ApiClient _api = ApiClient(Uri.parse(AppConfig.apiUrl));
+  // Created in _load, once the TLS trust is known.
+  ApiClient? _apiClient;
+  MqttLink? _linkOrNull;
+  ApiClient get _api => _apiClient!;
+  MqttLink get _link => _linkOrNull!;
   late final LinesCache _linesCache = LinesCache(_db, _api);
-  late final MqttLink _link = MqttLink(
-    host: AppConfig.mqttHost,
-    port: AppConfig.mqttPort,
-    secure: AppConfig.mqttTls,
-    clientId: 'pas-${math.Random().nextInt(1 << 31).toRadixString(36)}',
-    usage: _api.usage, // one counter for the whole session
-  );
   PassengerSession? _session;
   StreamSubscription<PassengerView>? _views;
   StreamSubscription<void>? _drops;
@@ -79,7 +77,6 @@ class PasajeroController extends Notifier<PasajeroState> with WidgetsBindingObse
   @override
   PasajeroState build() {
     WidgetsBinding.instance.addObserver(this);
-    _drops = _link.disconnects.listen((_) => unawaited(_reconnect()));
     ref.onDispose(() {
       WidgetsBinding.instance.removeObserver(this);
       unawaited(_dispose());
@@ -89,6 +86,17 @@ class PasajeroController extends Notifier<PasajeroState> with WidgetsBindingObse
   }
 
   Future<void> _load() async {
+    final tls = await uiSecurityContext(_db);
+    final api = _apiClient = ApiClient(Uri.parse(AppConfig.apiUrl), http: httpClientFor(tls));
+    final link = _linkOrNull = MqttLink(
+      host: AppConfig.mqttHost,
+      port: AppConfig.mqttPort,
+      secure: AppConfig.mqttTls,
+      securityContext: tls,
+      clientId: 'pas-${math.Random().nextInt(1 << 31).toRadixString(36)}',
+      usage: api.usage, // one counter for the whole session
+    );
+    _drops = link.disconnects.listen((_) => unawaited(_reconnect()));
     final cached = await _linesCache.cached();
     final line = await _db.getString('pas_line');
     state = state.copyWith(loading: false, lines: cached, line: line);
@@ -104,7 +112,7 @@ class PasajeroController extends Notifier<PasajeroState> with WidgetsBindingObse
     }
   }
 
-  double get _kb => _api.usage.totalKb;
+  double get _kb => _apiClient?.usage.totalKb ?? 0;
 
   Future<void> selectLine(String line) async {
     if (line == state.line) return;
@@ -192,8 +200,8 @@ class PasajeroController extends Notifier<PasajeroState> with WidgetsBindingObse
     await _drops?.cancel();
     await _views?.cancel();
     await _session?.close();
-    await _link.dispose();
-    _api.close();
+    await _linkOrNull?.dispose();
+    _apiClient?.close();
     await _db.close();
   }
 }

@@ -1,5 +1,6 @@
 // End-to-end against the local stack (docker compose + backend on :8080):
-//   TRANSMCBO_IT=1 flutter test test/integration
+//   TRANSMCBO_IT=1 flutter test test/integration            (plain MQTT 1883)
+//   TRANSMCBO_IT=1 MQTT_TLS=1 flutter test test/integration (TLS 8883)
 // Needs vehicle 7 with PIN 4821 in the `vehicle` table.
 @Tags(['integration'])
 library;
@@ -18,6 +19,15 @@ final enabled = Platform.environment['TRANSMCBO_IT'] == '1';
 final apiUrl = Platform.environment['API_URL'] ?? 'http://127.0.0.1:8080';
 final mqttHost = Platform.environment['MQTT_HOST'] ?? '127.0.0.1';
 
+/// MQTT_TLS=1: same tests over TLS on 8883, trusting DEV_CA (certs/ca.crt from tools/gen-dev-certs.sh).
+final tls = Platform.environment['MQTT_TLS'] == '1';
+final tlsContext = tls
+    ? (SecurityContext(withTrustedRoots: false)..setTrustedCertificates(Platform.environment['DEV_CA'] ?? '../../../certs/ca.crt'))
+    : null;
+
+MqttLink link(String clientId) =>
+    MqttLink(host: mqttHost, port: tls ? 8883 : 1883, secure: tls, securityContext: tlsContext, clientId: clientId);
+
 void main() {
   if (!enabled) {
     test('MQTT integration', () {}, skip: 'set TRANSMCBO_IT=1 with the local stack running');
@@ -29,7 +39,7 @@ void main() {
 
   Future<MqttLink> passenger(String id) async {
     final token = await api.passengerToken();
-    final l = MqttLink(host: mqttHost, clientId: id);
+    final l = link(id);
     await l.connect(jwt: token.jwt);
     links.add(l);
     return l;
@@ -38,7 +48,7 @@ void main() {
   setUp(() async {
     api = ApiClient(Uri.parse(apiUrl));
     final token = await api.driverToken(veh: veh, pin: '4821', line: line);
-    driver = MqttLink(host: mqttHost, clientId: 'veh-$veh-it');
+    driver = link('veh-$veh-it');
     await driver.connect(jwt: token.jwt, username: 'veh:$veh', willTopic: liveTopic(line, veh));
     links.add(driver);
   });

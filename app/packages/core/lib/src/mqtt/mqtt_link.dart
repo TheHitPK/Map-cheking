@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'dart:convert';
+import 'dart:io';
 import 'dart:typed_data';
 
 import 'package:mqtt5_client/mqtt5_client.dart';
@@ -32,6 +33,7 @@ class MqttLink implements LivePublisher, LiveFeed {
     this.port = 1883,
     required this.clientId,
     this.secure = false,
+    this.securityContext,
     DataUsage? usage,
     MqttServerClient Function(String host, String clientId, int port)? clientFactory,
   })  : usage = usage ?? DataUsage(),
@@ -41,6 +43,9 @@ class MqttLink implements LivePublisher, LiveFeed {
   final int port;
   final String clientId;
   final bool secure;
+
+  /// Trust for TLS; null = system roots. Debug builds pass the dev CA (tools/gen-dev-certs.sh).
+  final SecurityContext? securityContext;
   final DataUsage usage;
   final MqttServerClient Function(String, String, int) _factory;
 
@@ -65,6 +70,7 @@ class MqttLink implements LivePublisher, LiveFeed {
     await disconnect();
     final c = _factory(host, clientId, port)
       ..secure = secure
+      ..securityContext = securityContext ?? SecurityContext.defaultContext
       ..keepAlivePeriod = 120
       ..autoReconnect = false
       ..logging(on: false);
@@ -87,6 +93,10 @@ class MqttLink implements LivePublisher, LiveFeed {
     _disconnectHook = () => userDisconnect = true;
 
     usage.mqttTx += connectBytes(clientId: clientId, username: username, jwt: jwt, willTopic: willTopic);
+    if (secure) {
+      usage.mqttTx += tlsHandshakeTxBytes;
+      usage.mqttRx += tlsHandshakeRxBytes;
+    }
     final status = await c.connect();
     usage.mqttRx += connAckBytes;
     if (status?.state != MqttConnectionState.connected) {
@@ -163,6 +173,9 @@ class MqttLink implements LivePublisher, LiveFeed {
   static int connectBytes({required String clientId, required String username, required String jwt, String? willTopic}) =>
       14 + clientId.length + username.length + jwt.length + (willTopic == null ? 0 : willTopic.length + 4);
   static const connAckBytes = 8;
+
+  /// Full TLS handshake with the ECDSA dev/prod chain, measured in tls_resumption_test (no resumption in dart:io).
+  static const tlsHandshakeTxBytes = 340, tlsHandshakeRxBytes = 1260;
   static int subscribeBytes(String topic) => 8 + topic.length;
   static int incomingPublishBytes(String topic, int payloadLength) => 2 + 2 + topic.length + 1 + payloadLength;
 

@@ -53,8 +53,15 @@ void main() {
     api.close();
     await server.close(force: true);
 
-    // MQTT: 2 connections (open + resume), 3 subscriptions each, 3 vehicles publishing every 15 s for 15 min.
     final usage = api.usage;
+
+    // TLS: every connection is a full handshake (dart:io does not resume): 2 MQTT + 2 HTTPS (keep-alive).
+    usage.mqttTx += 2 * MqttLink.tlsHandshakeTxBytes;
+    usage.mqttRx += 2 * MqttLink.tlsHandshakeRxBytes;
+    usage.httpTx += 2 * MqttLink.tlsHandshakeTxBytes;
+    usage.httpRx += 2 * MqttLink.tlsHandshakeRxBytes;
+
+    // MQTT: 2 connections (open + resume), 3 subscriptions each, 3 vehicles publishing every 15 s for 15 min.
     const topic = 'v/santa-rosa/101';
     final pos = makePos(veh: 101, tsSec: 1800000000, at: const GeoPoint(10.65, -71.61), speedKmh: 30, headingDeg: 90);
     for (var c = 0; c < 2; c++) {
