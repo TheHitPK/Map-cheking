@@ -1,6 +1,7 @@
 package com.transmcbo.ingest;
 
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Set;
@@ -39,6 +40,23 @@ public class LivePositions {
         if (latest.remove(veh) != null) {
             dirty.add(veh);
         }
+    }
+
+    /** Removes vehicles whose last fix is older than {@code minTs}; returns how many. */
+    public int evictOlderThan(long minTs) {
+        int n = 0;
+        for (var e : latest.entrySet()) {
+            if (e.getValue().ts() < minTs && latest.remove(e.getKey(), e.getValue())) {
+                dirty.add(e.getKey());
+                n++;
+            }
+        }
+        return n;
+    }
+
+    /** Re-queues ids whose flush failed. */
+    public void markDirty(Collection<Integer> vehs) {
+        dirty.addAll(vehs);
     }
 
     /** Returns and clears the changed vehicle ids; absent ones in {@link #get} were removed. */
