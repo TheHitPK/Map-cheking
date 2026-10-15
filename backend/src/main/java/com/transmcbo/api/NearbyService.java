@@ -1,8 +1,10 @@
 package com.transmcbo.api;
 
+import com.transmcbo.api.ApproachFilter.Approach;
 import com.transmcbo.live.RedisFlusher;
 import com.transmcbo.proto.Nearby;
 import com.transmcbo.proto.NearbyList;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import org.springframework.data.geo.Distance;
@@ -33,27 +35,35 @@ public class NearbyService {
         this.redis = redis;
     }
 
-    /** Up to 3 vehicles of {@code line} coming towards the passenger, closest first, from the smallest radius that has any. */
+    /**
+     * Up to 3 vehicles of {@code line}, closest first: those coming towards the passenger plus stopped ones
+     * (no usable heading). The radius widens until one is approaching, so a stopped bus never hides a moving one.
+     */
     public NearbyList find(String line, int userLat, int userLon) {
-        NearbyList found = NearbyList.getDefaultInstance();
+        List<Candidate> found = List.of();
         for (double radius : RADII_M) {
-            found = find(line, userLat, userLon, radius);
-            if (found.getVehiclesCount() > 0) {
+            found = candidates(line, userLat, userLon, radius); // each ring contains the previous one
+            if (found.stream().anyMatch(Candidate::approaching)) {
                 break;
             }
         }
-        return found;
+        NearbyList.Builder out = NearbyList.newBuilder();
+        found.stream().limit(MAX_RESULTS).forEach(c -> out.addVehicles(c.vehicle()));
+        return out.build();
     }
 
-    private NearbyList find(String line, int userLat, int userLon, double radiusM) {
+    private record Candidate(Nearby vehicle, boolean approaching) {
+    }
+
+    /** Approaching or stopped vehicles within {@code radiusM}, closest first. */
+    private List<Candidate> candidates(String line, int userLat, int userLon, double radiusM) {
         GeoResults<GeoLocation<String>> results = redis.opsForGeo().search(
                 RedisFlusher.geoKey(line),
                 GeoReference.fromCoordinate(new Point(userLon / 1e6, userLat / 1e6)),
                 new Distance(radiusM, DistanceUnit.METERS),
                 GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().sortAscending().limit(CANDIDATES));
-        NearbyList.Builder out = NearbyList.newBuilder();
         if (results == null || results.getContent().isEmpty()) {
-            return out.build();
+            return List.of();
         }
         List<GeoResult<GeoLocation<String>>> hits = results.getContent();
         List<Object> hashes = redis.executePipelined((RedisCallback<Object>) conn -> {
@@ -62,7 +72,8 @@ public class NearbyService {
             return null;
         });
 
-        for (int i = 0; i < hits.size() && out.getVehiclesCount() < MAX_RESULTS; i++) {
+        List<Candidate> out = new ArrayList<>();
+        for (int i = 0; i < hits.size(); i++) {
             @SuppressWarnings("unchecked")
             Map<String, String> h = (Map<String, String>) hashes.get(i);
             if (h == null || h.isEmpty() || !line.equals(h.get("line"))) {
@@ -70,19 +81,23 @@ public class NearbyService {
             }
             int lat = Integer.parseInt(h.get("lat"));
             int lon = Integer.parseInt(h.get("lon"));
+            int spd = Integer.parseInt(h.get("spd"));
             int hdg = Integer.parseInt(h.get("hdg"));
-            if (!ApproachFilter.approaching(lat, lon, Integer.parseInt(h.get("plat")), Integer.parseInt(h.get("plon")), hdg, userLat, userLon)) {
+            Approach approach = ApproachFilter.classify(
+                    lat, lon, Integer.parseInt(h.get("plat")), Integer.parseInt(h.get("plon")), spd, hdg, userLat, userLon);
+            if (approach == Approach.AWAY) {
                 continue;
             }
-            out.addVehicles(Nearby.newBuilder()
+            out.add(new Candidate(Nearby.newBuilder()
                     .setVeh(Integer.parseUnsignedInt(hits.get(i).getContent().getName()))
                     .setTs((int) Long.parseLong(h.get("ts")))
                     .setLat(lat)
                     .setLon(lon)
-                    .setSpd(Integer.parseInt(h.get("spd")))
+                    .setSpd(spd)
                     .setHdg(hdg)
-                    .setDistM((int) Math.round(hits.get(i).getDistance().getValue())));
+                    .setDistM((int) Math.round(hits.get(i).getDistance().getValue()))
+                    .build(), approach == Approach.APPROACHING));
         }
-        return out.build();
+        return out;
     }
 }

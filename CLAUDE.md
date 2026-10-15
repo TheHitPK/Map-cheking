@@ -39,7 +39,7 @@ El pasajero ve en un mapa dónde va un carrito/bus de una línea, a qué distanc
 - Caché Caffeine de rutas con clave `(veh, geohash7 del pasajero)` y TTL 60 s.
 - HTTP (respuestas Protobuf):
   - `GET /lineas`: cacheable con ETag.
-  - `GET /lineas/{id}/cercanos?lat&lon`: Redis `GEOSEARCH` en radios escalonados 3 → 8 → 20 km (gana el primero con alguno acercándose); filtra los que se acercan (rumbo hacia el pasajero / distancia decreciente); máx 3.
+  - `GET /lineas/{id}/cercanos?lat&lon`: Redis `GEOSEARCH` en radios escalonados 3 → 8 → 20 km (gana el primero con alguno acercándose); filtra los que se acercan (distancia decreciente; rumbo si se mueve lento); los detenidos se muestran pero no frenan la ampliación del radio; máx 3.
   - `GET /ruta?veh&lat&lon`: polyline codificada + distancia (≈ 1–2 KB).
 - gzip solo para respuestas > 1 KB.
 - Micrometer: msgs/s, tamaño de cola, descartes, latencia de flush.

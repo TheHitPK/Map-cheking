@@ -2,6 +2,7 @@ package com.transmcbo.api;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
+import com.transmcbo.api.ApproachFilter.Approach;
 import org.junit.jupiter.api.Test;
 
 class ApproachFilterTest {
@@ -11,24 +12,31 @@ class ApproachFilterTest {
 
     @Test
     void movingTowardsPassengerIsApproaching() {
-        assertThat(ApproachFilter.approaching(LAT + 5 * M100, LON, LAT + 7 * M100, LON, 90, LAT, LON)).isTrue();
+        assertThat(ApproachFilter.classify(LAT + 5 * M100, LON, LAT + 7 * M100, LON, 30, 90, LAT, LON)).isEqualTo(Approach.APPROACHING);
     }
 
     @Test
-    void movingAwayIsNotApproaching() {
-        assertThat(ApproachFilter.approaching(LAT + 5 * M100, LON, LAT + 3 * M100, LON, 0, LAT, LON)).isFalse();
+    void movingAwayIsAway() {
+        assertThat(ApproachFilter.classify(LAT + 5 * M100, LON, LAT + 3 * M100, LON, 30, 0, LAT, LON)).isEqualTo(Approach.AWAY);
     }
 
     @Test
     void veryCloseIsAlwaysShown() {
-        assertThat(ApproachFilter.approaching(LAT + M100 / 2, LON, LAT, LON, 0, LAT, LON)).isTrue();
+        assertThat(ApproachFilter.classify(LAT + M100 / 2, LON, LAT, LON, 30, 0, LAT, LON)).isEqualTo(Approach.APPROACHING);
     }
 
     @Test
-    void stoppedVehicleUsesHeading() {
+    void stoppedVehicleIsStoppedWhateverItsHeading() {
+        int lat = LAT + 5 * M100;
+        assertThat(ApproachFilter.classify(lat, LON, lat, LON, 0, 0, LAT, LON)).isEqualTo(Approach.STOPPED);
+        assertThat(ApproachFilter.classify(lat, LON, lat, LON, 2, 90, LAT, LON)).isEqualTo(Approach.STOPPED);
+    }
+
+    @Test
+    void slowVehicleWithoutDisplacementUsesHeading() {
         int lat = LAT + 5 * M100; // north of the passenger
-        assertThat(ApproachFilter.approaching(lat, LON, lat, LON, 90, LAT, LON)).as("facing south (180°)").isTrue();
-        assertThat(ApproachFilter.approaching(lat, LON, lat, LON, 0, LAT, LON)).as("facing north (0°)").isFalse();
-        assertThat(ApproachFilter.approaching(lat, LON, lat, LON, 110, LAT, LON)).as("220°, within 60°").isTrue();
+        assertThat(ApproachFilter.classify(lat, LON, lat, LON, 8, 90, LAT, LON)).as("facing south (180°)").isEqualTo(Approach.APPROACHING);
+        assertThat(ApproachFilter.classify(lat, LON, lat, LON, 8, 0, LAT, LON)).as("facing north (0°)").isEqualTo(Approach.AWAY);
+        assertThat(ApproachFilter.classify(lat, LON, lat, LON, 8, 110, LAT, LON)).as("220°, within 60°").isEqualTo(Approach.APPROACHING);
     }
 }

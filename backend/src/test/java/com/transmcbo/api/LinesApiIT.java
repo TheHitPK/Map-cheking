@@ -114,6 +114,25 @@ class LinesApiIT {
         assertThat(NearbyList.parseFrom(get(nearbyPath("milagro-norte"), null).body()).getVehiclesList()).isEmpty();
     }
 
+    /** Vehicle parked {@code atM} hundreds of metres north of the passenger (GPS heading 0). */
+    void stopped(String line, int veh, int atM) {
+        long now = System.currentTimeMillis() / 1000;
+        live.putIf(new Fix(line, veh, now - 60, LAT + atM * M100, LON, 0, 0), (p, n) -> true);
+        flusher.flush();
+        live.putIf(new Fix(line, veh, now, LAT + atM * M100, LON, 0, 0), (p, n) -> true);
+        flusher.flush();
+    }
+
+    @Test
+    void stoppedVehiclesAreShownButDoNotStopTheSearch() throws Exception {
+        stopped("san-jacinto", 301, 20);              // 2 km, parked
+        vehicle("san-jacinto", 302, 62, 60);          // 6 km, approaching
+        vehicle("san-jacinto", 303, 25, 27);          // 2.7 km, moving away
+
+        assertThat(NearbyList.parseFrom(get(nearbyPath("san-jacinto"), null).body()).getVehiclesList())
+                .extracting(Nearby::getVeh).containsExactly(301, 302);
+    }
+
     @Test
     void unknownLineIs404AndOutsideAreaIs400() throws Exception {
         assertThat(get(nearbyPath("no-existe"), null).statusCode()).isEqualTo(404);
