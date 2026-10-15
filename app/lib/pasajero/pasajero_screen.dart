@@ -16,7 +16,11 @@ final _tileProvider = FutureProvider((ref) => offlineTileProvider());
 
 LatLng _ll(GeoPoint p) => LatLng(p.lat, p.lon);
 
-const _maxZoom = 14.0;
+/// Raster mode (fast) up to the deepest zoom in the bundled file; vector mode beyond it,
+/// because raster overzoom renders blank on devices.
+const _rasterMaxZoom = 14.0;
+const _maxZoom = 17.0;
+final _mapTheme = ProtomapsThemes.lightV4(); // Protomaps builds use basemap schema v4
 
 /// The only passenger screen: offline map, line selector and the distance/ETA card.
 class PasajeroScreen extends ConsumerStatefulWidget {
@@ -28,9 +32,10 @@ class PasajeroScreen extends ConsumerStatefulWidget {
 
 class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
   final _map = MapController();
+  var _detailed = false; // zoom > _rasterMaxZoom: vector rendering
 
   void _centerOn(GeoPoint? p) {
-    if (p != null) _map.move(_ll(p), _maxZoom);
+    if (p != null) _map.move(_ll(p), _rasterMaxZoom);
   }
 
   @override
@@ -52,9 +57,13 @@ class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
             mapController: _map,
             options: MapOptions(
               initialCenter: _ll(s.user ?? maracaibo),
-              initialZoom: _maxZoom,
+              initialZoom: _rasterMaxZoom,
               minZoom: 11,
-              maxZoom: _maxZoom, // deepest zoom in the bundled file; overzoom renders blank on devices
+              maxZoom: _maxZoom,
+              onPositionChanged: (camera, _) {
+                final detailed = camera.zoom > _rasterMaxZoom;
+                if (detailed != _detailed) setState(() => _detailed = detailed);
+              },
               cameraConstraint: CameraConstraint.contain(
                 bounds: LatLngBounds(const LatLng(10.40, -72.0), const LatLng(10.95, -71.40)),
               ),
@@ -63,9 +72,11 @@ class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
             children: [
               if (tiles.value case final provider?)
                 VectorTileLayer(
-                  theme: ProtomapsThemes.lightV4(), // Protomaps builds use basemap schema v4
+                  key: ValueKey(_detailed),
+                  theme: _mapTheme,
                   tileProviders: TileProviders({'protomaps': provider}),
-                  maximumZoom: _maxZoom,
+                  layerMode: _detailed ? VectorTileLayerMode.vector : VectorTileLayerMode.raster,
+                  maximumZoom: _detailed ? _maxZoom : _rasterMaxZoom,
                 ),
               if (view.route.length >= 2)
                 PolylineLayer(polylines: [
