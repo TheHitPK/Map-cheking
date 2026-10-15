@@ -16,6 +16,8 @@ final _tileProvider = FutureProvider((ref) => offlineTileProvider());
 
 LatLng _ll(GeoPoint p) => LatLng(p.lat, p.lon);
 
+const _maxZoom = 14.0;
+
 /// The only passenger screen: offline map, line selector and the distance/ETA card.
 class PasajeroScreen extends ConsumerStatefulWidget {
   const PasajeroScreen({super.key});
@@ -28,7 +30,7 @@ class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
   final _map = MapController();
 
   void _centerOn(GeoPoint? p) {
-    if (p != null) _map.move(_ll(p), math.max(_map.camera.zoom, 15));
+    if (p != null) _map.move(_ll(p), _maxZoom);
   }
 
   @override
@@ -50,9 +52,9 @@ class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
             mapController: _map,
             options: MapOptions(
               initialCenter: _ll(s.user ?? maracaibo),
-              initialZoom: 15,
+              initialZoom: _maxZoom,
               minZoom: 11,
-              maxZoom: 18,
+              maxZoom: _maxZoom, // deepest zoom in the bundled file; overzoom renders blank on devices
               cameraConstraint: CameraConstraint.contain(
                 bounds: LatLngBounds(const LatLng(10.40, -72.0), const LatLng(10.95, -71.40)),
               ),
@@ -63,7 +65,7 @@ class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
                 VectorTileLayer(
                   theme: ProtomapsThemes.lightV4(), // Protomaps builds use basemap schema v4
                   tileProviders: TileProviders({'protomaps': provider}),
-                  maximumZoom: 18, // raster mode: max zoom of the layer; tiles beyond z14 (end of the file) are overzoomed
+                  maximumZoom: _maxZoom,
                 ),
               if (view.route.length >= 2)
                 PolylineLayer(polylines: [
