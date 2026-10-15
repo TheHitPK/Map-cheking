@@ -17,11 +17,26 @@ final _tileProvider = FutureProvider((ref) => offlineTileProvider());
 LatLng _ll(GeoPoint p) => LatLng(p.lat, p.lon);
 
 /// The only passenger screen: offline map, line selector and the distance/ETA card.
-class PasajeroScreen extends ConsumerWidget {
+class PasajeroScreen extends ConsumerStatefulWidget {
   const PasajeroScreen({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
+  ConsumerState<PasajeroScreen> createState() => _PasajeroScreenState();
+}
+
+class _PasajeroScreenState extends ConsumerState<PasajeroScreen> {
+  final _map = MapController();
+
+  void _centerOn(GeoPoint? p) {
+    if (p != null) _map.move(_ll(p), math.max(_map.camera.zoom, 15));
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    // First GPS fix: bring the map to the passenger.
+    ref.listen(pasajeroProvider.select((s) => s.user), (prev, next) {
+      if (prev == null) _centerOn(next);
+    });
     final s = ref.watch(pasajeroProvider);
     final c = ref.read(pasajeroProvider.notifier);
     final tiles = ref.watch(_tileProvider);
@@ -32,6 +47,7 @@ class PasajeroScreen extends ConsumerWidget {
       body: Stack(
         children: [
           FlutterMap(
+            mapController: _map,
             options: MapOptions(
               initialCenter: _ll(s.user ?? maracaibo),
               initialZoom: 15,
@@ -47,7 +63,7 @@ class PasajeroScreen extends ConsumerWidget {
                 VectorTileLayer(
                   theme: ProtomapsThemes.lightV4(), // Protomaps builds use basemap schema v4
                   tileProviders: TileProviders({'protomaps': provider}),
-                  maximumZoom: 14, // the bundled file stops at z14; higher zooms are overzoomed
+                  maximumZoom: 18, // raster mode: max zoom of the layer; tiles beyond z14 (end of the file) are overzoomed
                 ),
               if (view.route.length >= 2)
                 PolylineLayer(polylines: [
@@ -94,7 +110,10 @@ class PasajeroScreen extends ConsumerWidget {
         ],
       ),
       floatingActionButton: FloatingActionButton.small(
-        onPressed: c.refresh,
+        onPressed: () async {
+          await c.refresh();
+          _centerOn(ref.read(pasajeroProvider).user);
+        },
         tooltip: 'Actualizar',
         child: const Icon(Icons.my_location),
       ),
