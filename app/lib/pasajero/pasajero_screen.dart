@@ -154,7 +154,7 @@ class _EtaCard extends StatelessWidget {
       _ when state.line == null => ('Elige tu línea', 'Verás dónde viene la unidad y en cuánto llega'),
       _ when state.error != null && view.vehicles.isEmpty => (state.error!, null),
       PassengerStatus.loading => ('Buscando unidades…', null),
-      PassengerStatus.noVehicles => ('No hay unidades acercándose', 'Ninguna a menos de 3 km. Toca actualizar en un rato'),
+      PassengerStatus.noVehicles => ('No hay unidades acercándose', 'Ninguna a menos de 20 km. Toca actualizar en un rato'),
       PassengerStatus.error => ('Sin conexión', 'Toca actualizar para reintentar'),
       PassengerStatus.tracking when eta == null => ('Unidad ${view.targetVeh ?? ''} en camino', 'Calculando el tiempo de llegada…'),
       PassengerStatus.tracking when eta!.arrived => ('Unidad ${view.targetVeh} llegando', 'Está a menos de 30 m'),

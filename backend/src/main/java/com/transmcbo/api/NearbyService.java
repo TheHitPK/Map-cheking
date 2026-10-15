@@ -22,7 +22,8 @@ import org.springframework.stereotype.Service;
 @Service
 public class NearbyService {
 
-    static final double RADIUS_M = 3000;
+    /** Widening search: the first radius with an approaching vehicle wins (long lines, few buses). */
+    static final double[] RADII_M = {3_000, 8_000, 20_000};
     static final int CANDIDATES = 10;
     static final int MAX_RESULTS = 3;
 
@@ -32,12 +33,23 @@ public class NearbyService {
         this.redis = redis;
     }
 
-    /** Up to 3 vehicles of {@code line} within 3 km that are coming towards the passenger, closest first. */
+    /** Up to 3 vehicles of {@code line} coming towards the passenger, closest first, from the smallest radius that has any. */
     public NearbyList find(String line, int userLat, int userLon) {
+        NearbyList found = NearbyList.getDefaultInstance();
+        for (double radius : RADII_M) {
+            found = find(line, userLat, userLon, radius);
+            if (found.getVehiclesCount() > 0) {
+                break;
+            }
+        }
+        return found;
+    }
+
+    private NearbyList find(String line, int userLat, int userLon, double radiusM) {
         GeoResults<GeoLocation<String>> results = redis.opsForGeo().search(
                 RedisFlusher.geoKey(line),
                 GeoReference.fromCoordinate(new Point(userLon / 1e6, userLat / 1e6)),
-                new Distance(RADIUS_M, DistanceUnit.METERS),
+                new Distance(radiusM, DistanceUnit.METERS),
                 GeoSearchCommandArgs.newGeoSearchArgs().includeDistance().sortAscending().limit(CANDIDATES));
         NearbyList.Builder out = NearbyList.newBuilder();
         if (results == null || results.getContent().isEmpty()) {

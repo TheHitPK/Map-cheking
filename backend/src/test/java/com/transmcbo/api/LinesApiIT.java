@@ -103,6 +103,18 @@ class LinesApiIT {
     }
 
     @Test
+    void nearbyWidensRadiusWhenNothingApproachesClose() throws Exception {
+        vehicle("la-limpia", 201, 1, 3);      // 300 m, moving away: does not stop the search
+        vehicle("la-limpia", 202, 62, 60);    // 6 km, approaching: found in the 8 km ring
+        vehicle("la-limpia", 203, 152, 150);  // 15 km, approaching: farther ring, not reached
+        vehicle("milagro-norte", 204, 252, 250); // 25 km: beyond the last ring
+
+        assertThat(NearbyList.parseFrom(get(nearbyPath("la-limpia"), null).body()).getVehiclesList())
+                .extracting(Nearby::getVeh).containsExactly(202);
+        assertThat(NearbyList.parseFrom(get(nearbyPath("milagro-norte"), null).body()).getVehiclesList()).isEmpty();
+    }
+
+    @Test
     void unknownLineIs404AndOutsideAreaIs400() throws Exception {
         assertThat(get(nearbyPath("no-existe"), null).statusCode()).isEqualTo(404);
         assertThat(get("/lineas/santa-rosa/cercanos?lat=8.0&lon=-66.0", null).statusCode()).isEqualTo(400);
