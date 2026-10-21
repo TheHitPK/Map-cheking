@@ -17,13 +17,13 @@ public record Worksite(Long id, String name, String address, GeoPoint center, in
         name = name == null ? "" : name.trim();
         address = address == null ? "" : address.trim();
         if (name.length() < 2 || name.length() > 120) {
-            throw new InvalidInputException("El nombre de la obra debe tener entre 2 y 120 caracteres.");
+            throw new InvalidInputException("Job site name must be 2 to 120 characters.");
         }
         if (center == null) {
-            throw new InvalidInputException("Ubicación de la obra requerida.");
+            throw new InvalidInputException("Job site location is required.");
         }
         if (radiusMeters < MIN_RADIUS_M || radiusMeters > MAX_RADIUS_M) {
-            throw new InvalidInputException("El radio debe estar entre " + MIN_RADIUS_M + " y " + MAX_RADIUS_M + " m.");
+            throw new InvalidInputException("Radius must be between " + MIN_RADIUS_M + " and " + MAX_RADIUS_M + " m.");
         }
     }
 

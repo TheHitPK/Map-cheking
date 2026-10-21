@@ -6,8 +6,10 @@ import 'package:geolocator/geolocator.dart';
 import 'package:latlong2/latlong.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/format.dart';
 import '../../../core/models.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 
 /// Create or edit a worksite: tap the map (or type coordinates) for the centre, slider for the radius.
@@ -21,8 +23,9 @@ class WorksiteEditorPage extends ConsumerStatefulWidget {
 }
 
 class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
-  static const _defaultCenter = LatLng(10.6427, -71.6125); // Maracaibo
-  static const _minRadius = 20.0, _maxRadius = 2000.0;
+  static const _defaultCenter = LatLng(39.8283, -98.5795); // contiguous US
+  /// Backend accepts 20–2000 m (66–6561 ft).
+  static const _minRadiusFt = 70.0, _maxRadiusFt = 6500.0;
 
   final _form = GlobalKey<FormState>();
   final _map = MapController();
@@ -30,7 +33,7 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
   late final _address = TextEditingController(text: widget.worksite?.address);
   late final _lat = TextEditingController(text: widget.worksite?.lat.toStringAsFixed(6));
   late final _lon = TextEditingController(text: widget.worksite?.lon.toStringAsFixed(6));
-  late double _radius = (widget.worksite?.radiusMeters ?? 100).toDouble();
+  late double _radius = (widget.worksite?.radiusMeters ?? 100).toDouble(); // metres
   late bool _active = widget.worksite?.active ?? true;
   late LatLng? _center = widget.worksite == null ? null : LatLng(widget.worksite!.lat, widget.worksite!.lon);
   bool _saving = false;
@@ -66,13 +69,13 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
       var perm = await Geolocator.checkPermission();
       if (perm == LocationPermission.denied) perm = await Geolocator.requestPermission();
       if (perm == LocationPermission.denied || perm == LocationPermission.deniedForever) {
-        throw Exception('Permiso de ubicación denegado.');
+        throw Exception(S.locationDenied);
       }
       final p = await Geolocator.getCurrentPosition(
           locationSettings: const LocationSettings(accuracy: LocationAccuracy.high, timeLimit: Duration(seconds: 20)));
       _setCenter(LatLng(p.latitude, p.longitude), move: true);
     } catch (e) {
-      if (mounted) showMessage(context, 'No se pudo obtener su ubicación.', error: true);
+      if (mounted) showMessage(context, S.myLocationFailed, error: true);
     } finally {
       if (mounted) setState(() => _locating = false);
     }
@@ -81,7 +84,7 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
   Future<void> _save() async {
     if (!_form.currentState!.validate()) return;
     if (_center == null) {
-      showMessage(context, 'Toque el mapa para marcar el centro de la obra.', error: true);
+      showMessage(context, S.tapMapFirst, error: true);
       return;
     }
     setState(() => _saving = true);
@@ -91,7 +94,7 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
         'address': _address.text.trim(),
         'lat': _center!.latitude,
         'lon': _center!.longitude,
-        'radiusMeters': _radius.round(),
+        'radiusMeters': _radius.round().clamp(20, 2000),
         'active': _active,
       });
       if (mounted) Navigator.pop(context, true);
@@ -109,14 +112,14 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
     final form = _buildForm(context);
     return Scaffold(
       appBar: AppBar(
-        title: Text(widget.worksite == null ? 'Nueva obra' : 'Editar obra'),
+        title: Text(widget.worksite == null ? S.newSite : S.editSite),
         actions: [
           Padding(
             padding: const EdgeInsets.only(right: Space.sm),
             child: FilledButton(
               onPressed: _saving ? null : _save,
               style: FilledButton.styleFrom(minimumSize: const Size(96, 44)),
-              child: _saving ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text('Guardar'),
+              child: _saving ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2)) : const Text(S.save),
             ),
           ),
         ],
@@ -143,27 +146,27 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
       child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
         TextFormField(
           controller: _name,
-          decoration: const InputDecoration(labelText: 'Nombre de la obra *'),
+          decoration: const InputDecoration(labelText: S.siteName),
           textCapitalization: TextCapitalization.sentences,
-          validator: (v) => (v == null || v.trim().length < 2) ? 'Ingrese un nombre (mínimo 2 caracteres)' : null,
+          validator: (v) => (v == null || v.trim().length < 2) ? S.siteNameRequired : null,
         ),
         const SizedBox(height: Space.lg),
         TextFormField(
           controller: _address,
-          decoration: const InputDecoration(labelText: 'Dirección o referencia'),
+          decoration: const InputDecoration(labelText: S.address),
           textCapitalization: TextCapitalization.sentences,
         ),
         const SizedBox(height: Space.xl),
-        Text('Centro de la obra', style: t.textTheme.titleSmall),
+        Text(S.siteCenter, style: t.textTheme.titleSmall),
         const SizedBox(height: Space.xs),
-        Text('Toque el mapa o escriba las coordenadas.',
+        Text(S.siteCenterHelp,
             style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
         const SizedBox(height: Space.md),
         Row(children: [
           Expanded(
             child: TextFormField(
               controller: _lat,
-              decoration: const InputDecoration(labelText: 'Latitud'),
+              decoration: const InputDecoration(labelText: S.latitude),
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               inputFormatters: [coord],
               onEditingComplete: _centerFromFields,
@@ -173,7 +176,7 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
           Expanded(
             child: TextFormField(
               controller: _lon,
-              decoration: const InputDecoration(labelText: 'Longitud'),
+              decoration: const InputDecoration(labelText: S.longitude),
               keyboardType: const TextInputType.numberWithOptions(decimal: true, signed: true),
               inputFormatters: [coord],
               onEditingComplete: _centerFromFields,
@@ -186,20 +189,21 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
           icon: _locating
               ? const SizedBox.square(dimension: 18, child: CircularProgressIndicator(strokeWidth: 2))
               : const Icon(Icons.my_location),
-          label: const Text('Usar mi ubicación actual'),
+          label: const Text(S.useMyLocation),
         ),
         const SizedBox(height: Space.xl),
-        Text('Radio permitido: ${_radius.round()} m', style: t.textTheme.titleSmall),
+        Text(S.allowedRadius(Fmt.distance(_radius)), style: t.textTheme.titleSmall),
+        // Edited in feet (US), stored in metres.
         Slider(
-          value: _radius,
-          min: _minRadius,
-          max: _maxRadius,
-          divisions: ((_maxRadius - _minRadius) / 10).round(),
-          label: '${_radius.round()} m',
-          semanticFormatterCallback: (v) => '${v.round()} metros',
-          onChanged: (v) => setState(() => _radius = v),
+          value: (_radius * Fmt.feetPerMeter).clamp(_minRadiusFt, _maxRadiusFt),
+          min: _minRadiusFt,
+          max: _maxRadiusFt,
+          divisions: ((_maxRadiusFt - _minRadiusFt) / 10).round(),
+          label: Fmt.distance(_radius),
+          semanticFormatterCallback: (v) => '${v.round()} feet',
+          onChanged: (v) => setState(() => _radius = v / Fmt.feetPerMeter),
         ),
-        Text('Los trabajadores solo pueden marcar dentro de este círculo. Recomendado: 50–150 m.',
+        Text(S.radiusHelp,
             style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
         if (widget.worksite != null) ...[
           const SizedBox(height: Space.lg),
@@ -207,8 +211,8 @@ class _WorksiteEditorPageState extends ConsumerState<WorksiteEditorPage> {
             contentPadding: EdgeInsets.zero,
             value: _active,
             onChanged: (v) => setState(() => _active = v),
-            title: const Text('Obra activa'),
-            subtitle: const Text('Una obra inactiva no acepta marcas.'),
+            title: const Text(S.siteActive),
+            subtitle: const Text(S.siteActiveHelp),
           ),
         ],
       ]),
@@ -229,12 +233,12 @@ class _MapPicker extends StatelessWidget {
   Widget build(BuildContext context) {
     final c = Theme.of(context).colorScheme;
     return Semantics(
-      label: 'Mapa de la obra. Toque para fijar el centro.',
+      label: S.mapSemantics,
       child: FlutterMap(
         mapController: controller,
         options: MapOptions(
           initialCenter: center ?? fallback,
-          initialZoom: center == null ? 13 : 17,
+          initialZoom: center == null ? 4 : 17,
           onTap: (_, p) => onTap(p),
         ),
         children: [

@@ -13,13 +13,13 @@ public record Employee(Long id, String document, String fullName, Role role, Str
         document = document == null ? "" : document.trim();
         fullName = fullName == null ? "" : fullName.trim();
         if (!document.matches("[A-Za-z0-9.-]{3,32}")) {
-            throw new InvalidInputException("Documento inválido: use de 3 a 32 letras, números, punto o guion.");
+            throw new InvalidInputException("Invalid ID: use 3 to 32 letters, digits, dots or dashes.");
         }
         if (fullName.length() < 3 || fullName.length() > 120) {
-            throw new InvalidInputException("El nombre debe tener entre 3 y 120 caracteres.");
+            throw new InvalidInputException("Name must be 3 to 120 characters.");
         }
         if (role == null) {
-            throw new InvalidInputException("Rol requerido.");
+            throw new InvalidInputException("Role is required.");
         }
     }
 

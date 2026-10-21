@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import '../../../core/api/api_client.dart';
 import '../../../core/models.dart';
+import '../../../core/strings.dart';
 
 /// Minimal persistent key/value port (shared_preferences in the app, a map in tests).
 abstract interface class KeyValueStore {
@@ -88,7 +89,7 @@ class OfflineQueue {
   Future<void> add(PendingMark mark) async {
     final items = await all();
     if (items.length >= maxSize) {
-      throw ApiException('Hay demasiadas marcas sin enviar. Conéctese a internet para enviarlas.');
+      throw ApiException(S.queueFull);
     }
     await _save([...items, mark]);
   }

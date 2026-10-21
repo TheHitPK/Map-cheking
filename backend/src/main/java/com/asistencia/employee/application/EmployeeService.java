@@ -25,7 +25,7 @@ public class EmployeeService {
     }
 
     public Employee get(long id) {
-        return employees.findById(id).orElseThrow(() -> new NotFoundException("Empleado no encontrado."));
+        return employees.findById(id).orElseThrow(() -> new NotFoundException("Employee not found."));
     }
 
     public Employee create(String document, String fullName, Role role, String password) {
@@ -54,7 +54,7 @@ public class EmployeeService {
 
     private static String validPassword(String password) {
         if (password == null || password.length() < MIN_PASSWORD || password.length() > 72) {
-            throw new InvalidInputException("La clave debe tener entre " + MIN_PASSWORD + " y 72 caracteres.");
+            throw new InvalidInputException("Password must be " + MIN_PASSWORD + " to 72 characters.");
         }
         return password;
     }

@@ -57,7 +57,7 @@ public class AttendanceQueryService {
 
     public Today today(long employeeId) {
         Employee employee = employees.findById(employeeId)
-                .orElseThrow(() -> new NotFoundException("Empleado no encontrado."));
+                .orElseThrow(() -> new NotFoundException("Employee not found."));
         Instant now = clock.instant();
         LocalDate date = now.atZone(zone).toLocalDate();
         Optional<Shift> shift = shifts.findByEmployee(employeeId);
@@ -136,7 +136,7 @@ public class AttendanceQueryService {
     /** All marks (rejected included) between two local dates, inclusive. */
     public List<MarkRow> marks(LocalDate from, LocalDate to, Long worksiteId) {
         if (to.isBefore(from) || from.plusDays(MAX_REPORT_DAYS).isBefore(to)) {
-            throw new InvalidInputException("Rango de fechas inválido (máximo " + MAX_REPORT_DAYS + " días).");
+            throw new InvalidInputException("Invalid date range (" + MAX_REPORT_DAYS + " days max).");
         }
         Map<Long, Employee> people = employees.findAll().stream().collect(Collectors.toMap(Employee::id, Function.identity()));
         Map<Long, Worksite> sites = worksites.findAll().stream().collect(Collectors.toMap(Worksite::id, Function.identity()));

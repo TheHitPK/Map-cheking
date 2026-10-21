@@ -23,18 +23,18 @@ android {
     productFlavors {
         create("trabajador") {
             dimension = "role"
-            applicationIdSuffix = ".trabajador"
-            resValue("string", "app_name", "Asistencia")
+            applicationIdSuffix = ".crew"
+            resValue("string", "app_name", "PinPunch")
         }
         create("supervisor") {
             dimension = "role"
             applicationIdSuffix = ".supervisor"
-            resValue("string", "app_name", "Asistencia Supervisor")
+            resValue("string", "app_name", "PinPunch Supervisor")
         }
     }
 
     defaultConfig {
-        applicationId = "com.asistencia"
+        applicationId = "com.pinpunch"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

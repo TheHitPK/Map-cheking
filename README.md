@@ -1,6 +1,6 @@
-# Asistencia GPS
+# PinPunch
 
-Control de llegada y salida de trabajadores en obra. El trabajador marca desde su teléfono; el servidor verifica
+GPS time clock for construction crews (US). El trabajador marca desde su teléfono; el servidor verifica
 por GPS que esté dentro del radio de la obra y clasifica la marca según su horario.
 
 ```

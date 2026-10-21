@@ -2,6 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../core/auth/auth_controller.dart';
+import '../../../core/brand/brand.dart';
+import '../../../core/strings.dart';
 import 'employees_page.dart';
 import 'reports_page.dart';
 import 'today_page.dart';
@@ -19,10 +21,10 @@ class _SupervisorShellState extends ConsumerState<SupervisorShell> {
   int _index = 0;
 
   static const _destinations = [
-    (icon: Icons.today_outlined, selected: Icons.today, label: 'Hoy'),
-    (icon: Icons.location_city_outlined, selected: Icons.location_city, label: 'Obras'),
-    (icon: Icons.groups_outlined, selected: Icons.groups, label: 'Personal'),
-    (icon: Icons.assessment_outlined, selected: Icons.assessment, label: 'Reportes'),
+    (icon: Icons.today_outlined, selected: Icons.today, label: S.navToday),
+    (icon: Icons.location_city_outlined, selected: Icons.location_city, label: S.navSites),
+    (icon: Icons.groups_outlined, selected: Icons.groups, label: S.navCrew),
+    (icon: Icons.assessment_outlined, selected: Icons.assessment, label: S.reportsTitle),
   ];
 
   static const _pages = [TodayPage(), WorksitesPage(), EmployeesPage(), ReportsPage()];
@@ -31,10 +33,10 @@ class _SupervisorShellState extends ConsumerState<SupervisorShell> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Cerrar sesión?'),
+        title: const Text(S.signOutQuestion),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('Cerrar sesión')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text(S.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, true), child: const Text(S.signOut)),
         ],
       ),
     );
@@ -69,7 +71,7 @@ class _SupervisorShellState extends ConsumerState<SupervisorShell> {
           labelType: width >= 1200 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
           leading: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Icon(Icons.admin_panel_settings_outlined, size: 32, color: Theme.of(context).colorScheme.primary),
+            child: Tooltip(message: S.supervisorAppName, child: PinPunchMark(size: 36)),
           ),
           trailing: Expanded(
             child: Align(
@@ -77,7 +79,7 @@ class _SupervisorShellState extends ConsumerState<SupervisorShell> {
               child: Padding(
                 padding: const EdgeInsets.only(bottom: 16),
                 child: Tooltip(
-                  message: 'Cerrar sesión ($name)',
+                  message: '${S.signOut} ($name)',
                   child: IconButton(icon: const Icon(Icons.logout), onPressed: _logout),
                 ),
               ),
@@ -114,11 +116,11 @@ class SupervisorAppBar extends ConsumerWidget implements PreferredSizeWidget {
         ...actions,
         if (!wide)
           PopupMenuButton<void>(
-            tooltip: 'Más opciones',
+            tooltip: S.moreOptions,
             itemBuilder: (_) => [
               PopupMenuItem(
                 onTap: () => ref.read(authProvider.notifier).logout(),
-                child: const ListTile(leading: Icon(Icons.logout), title: Text('Cerrar sesión'), contentPadding: EdgeInsets.zero),
+                child: const ListTile(leading: Icon(Icons.logout), title: Text(S.signOut), contentPadding: EdgeInsets.zero),
               ),
             ],
           ),

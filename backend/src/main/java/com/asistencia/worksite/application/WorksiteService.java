@@ -18,7 +18,7 @@ public class WorksiteService {
     }
 
     public Worksite get(long id) {
-        return worksites.findById(id).orElseThrow(() -> new NotFoundException("Obra no encontrada."));
+        return worksites.findById(id).orElseThrow(() -> new NotFoundException("Job site not found."));
     }
 
     public Worksite create(Worksite worksite) {

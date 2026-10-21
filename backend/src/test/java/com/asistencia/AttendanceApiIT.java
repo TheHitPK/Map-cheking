@@ -29,7 +29,7 @@ import tools.jackson.databind.json.JsonMapper;
 @Testcontainers
 class AttendanceApiIT {
 
-    static final ZoneId ZONE = ZoneId.of("America/Caracas");
+    static final ZoneId ZONE = ZoneId.of("America/New_York"); // default asistencia.zone
     static final double LAT = 10.6427, LON = -71.6125;
 
     @Container

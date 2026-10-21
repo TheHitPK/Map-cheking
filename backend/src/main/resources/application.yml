@@ -17,7 +17,7 @@ server:
 
 asistencia:
   # Official time zone for shifts and daily reports.
-  zone: America/Caracas
+  zone: ${APP_TIMEZONE:America/New_York}
   auth:
     # Dev default only; set JWT_SECRET in production.
     jwt-secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}

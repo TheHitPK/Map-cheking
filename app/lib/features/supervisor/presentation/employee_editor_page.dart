@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../app/theme.dart';
 import '../../../core/format.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 import '../data/supervisor_models.dart';
 
@@ -50,7 +51,7 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
           'password': _password.text,
         });
         if (!mounted) return;
-        showMessage(context, 'Empleado creado.${e.isWorker ? ' Ahora asígnele obra y horario.' : ''}');
+        showMessage(context, S.memberCreated(e.isWorker));
         // Continue in edit mode so the shift can be assigned right away.
         await Navigator.of(context).pushReplacement(MaterialPageRoute<bool>(builder: (_) => EmployeeEditorPage(employee: e)));
         return;
@@ -69,16 +70,16 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
     final pwd = await showDialog<String>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('Nueva clave'),
+        title: const Text(S.newPassword),
         content: TextField(
           controller: controller,
           obscureText: true,
           autofocus: true,
-          decoration: const InputDecoration(labelText: 'Clave (mínimo 6 caracteres)'),
+          decoration: const InputDecoration(labelText: S.newPasswordLabel),
         ),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text('Cancelar')),
-          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text('Guardar clave')),
+          TextButton(onPressed: () => Navigator.pop(ctx), child: const Text(S.cancel)),
+          FilledButton(onPressed: () => Navigator.pop(ctx, controller.text), child: const Text(S.savePassword)),
         ],
       ),
     );
@@ -86,7 +87,7 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
     if (pwd == null || !mounted) return;
     try {
       await ref.read(supervisorApiProvider).resetPassword(widget.employee!.id, pwd);
-      if (mounted) showMessage(context, 'Clave actualizada.');
+      if (mounted) showMessage(context, S.passwordUpdated);
     } catch (e) {
       if (mounted) showMessage(context, '$e', error: true);
     }
@@ -101,7 +102,7 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
         if (!didPop) Navigator.pop(context, _changed);
       },
       child: Scaffold(
-        appBar: AppBar(title: Text(_isNew ? 'Nuevo empleado' : widget.employee!.fullName)),
+        appBar: AppBar(title: Text(_isNew ? S.newCrewMember : widget.employee!.fullName)),
         body: ListView(padding: const EdgeInsets.all(Space.lg), children: [
           MaxWidth(
             width: 640,
@@ -109,31 +110,31 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
               Form(
                 key: _form,
                 child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-                  Text('Datos', style: t.textTheme.titleMedium),
+                  Text(S.details, style: t.textTheme.titleMedium),
                   const SizedBox(height: Space.md),
                   TextFormField(
                     controller: _document,
                     enabled: _isNew,
                     decoration: InputDecoration(
-                      labelText: 'Cédula o usuario *',
-                      helperText: _isNew ? 'Con esto inicia sesión. No se puede cambiar después.' : null,
+                      labelText: S.employeeId,
+                      helperText: _isNew ? S.employeeIdHelp : null,
                     ),
                     validator: (v) => RegExp(r'^[A-Za-z0-9.-]{3,32}$').hasMatch(v?.trim() ?? '')
                         ? null
-                        : 'De 3 a 32 letras, números, punto o guion',
+                        : S.employeeIdInvalid,
                   ),
                   const SizedBox(height: Space.lg),
                   TextFormField(
                     controller: _name,
-                    decoration: const InputDecoration(labelText: 'Nombre completo *'),
+                    decoration: const InputDecoration(labelText: S.fullName),
                     textCapitalization: TextCapitalization.words,
-                    validator: (v) => (v?.trim().length ?? 0) < 3 ? 'Ingrese el nombre completo' : null,
+                    validator: (v) => (v?.trim().length ?? 0) < 3 ? S.fullNameRequired : null,
                   ),
                   const SizedBox(height: Space.lg),
                   SegmentedButton<String>(
                     segments: const [
-                      ButtonSegment(value: 'WORKER', icon: Icon(Icons.engineering_outlined), label: Text('Trabajador')),
-                      ButtonSegment(value: 'SUPERVISOR', icon: Icon(Icons.admin_panel_settings_outlined), label: Text('Supervisor')),
+                      ButtonSegment(value: 'WORKER', icon: Icon(Icons.engineering_outlined), label: Text(S.crewMember)),
+                      ButtonSegment(value: 'SUPERVISOR', icon: Icon(Icons.admin_panel_settings_outlined), label: Text(S.supervisor)),
                     ],
                     selected: {_role},
                     onSelectionChanged: (s) => setState(() => _role = s.first),
@@ -143,20 +144,20 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
                     TextFormField(
                       controller: _password,
                       obscureText: true,
-                      decoration: const InputDecoration(labelText: 'Clave inicial *', helperText: 'Mínimo 6 caracteres.'),
-                      validator: (v) => (v?.length ?? 0) < 6 ? 'Mínimo 6 caracteres' : null,
+                      decoration: const InputDecoration(labelText: S.initialPassword, helperText: S.passwordMin),
+                      validator: (v) => (v?.length ?? 0) < 6 ? S.passwordMinError : null,
                     ),
                   ] else ...[
                     SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       value: _active,
                       onChanged: (v) => setState(() => _active = v),
-                      title: const Text('Activo'),
-                      subtitle: const Text('Un empleado inactivo no puede iniciar sesión.'),
+                      title: const Text(S.active),
+                      subtitle: const Text(S.activeHelp),
                     ),
                     Align(
                       alignment: Alignment.centerLeft,
-                      child: TextButton.icon(onPressed: _resetPassword, icon: const Icon(Icons.key_outlined), label: const Text('Cambiar clave')),
+                      child: TextButton.icon(onPressed: _resetPassword, icon: const Icon(Icons.key_outlined), label: const Text(S.changePassword)),
                     ),
                   ],
                   const SizedBox(height: Space.lg),
@@ -164,7 +165,7 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
                     onPressed: _saving ? null : _save,
                     child: _saving
                         ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-                        : Text(_isNew ? 'Crear empleado' : 'Guardar datos'),
+                        : Text(_isNew ? S.createMember : S.saveDetails),
                   ),
                 ]),
               ),
@@ -223,15 +224,14 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
     final t = await showTimePicker(
       context: context,
       initialTime: start ? _start : _end,
-      builder: (ctx, child) => MediaQuery(data: MediaQuery.of(ctx).copyWith(alwaysUse24HourFormat: true), child: child!),
     );
     if (t != null) setState(() => start ? _start = t : _end = t);
   }
 
   Future<void> _save() async {
-    if (_worksiteId == null) return showMessage(context, 'Seleccione la obra.', error: true);
-    if (_days.isEmpty) return showMessage(context, 'Seleccione al menos un día.', error: true);
-    if (_start == _end) return showMessage(context, 'La entrada y la salida deben ser distintas.', error: true);
+    if (_worksiteId == null) return showMessage(context, S.selectSite, error: true);
+    if (_days.isEmpty) return showMessage(context, S.selectDay, error: true);
+    if (_start == _end) return showMessage(context, S.startEndDiffer, error: true);
     setState(() => _saving = true);
     try {
       await ref.read(supervisorApiProvider).assignShift(widget.employeeId, {
@@ -244,7 +244,7 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
       _exists = true;
       widget.onSaved();
       ref.invalidate(shiftsProvider);
-      if (mounted) showMessage(context, 'Horario guardado.');
+      if (mounted) showMessage(context, S.scheduleSaved);
     } catch (e) {
       if (mounted) showMessage(context, '$e', error: true);
     } finally {
@@ -256,14 +256,14 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
     final ok = await showDialog<bool>(
       context: context,
       builder: (ctx) => AlertDialog(
-        title: const Text('¿Quitar horario?'),
-        content: const Text('El trabajador no podrá marcar hasta que se le asigne otro.'),
+        title: const Text(S.removeScheduleQuestion),
+        content: const Text(S.removeScheduleBody),
         actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('Cancelar')),
+          TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text(S.cancel)),
           FilledButton(
             style: FilledButton.styleFrom(backgroundColor: Theme.of(ctx).colorScheme.error),
             onPressed: () => Navigator.pop(ctx, true),
-            child: const Text('Quitar'),
+            child: const Text(S.remove),
           ),
         ],
       ),
@@ -275,7 +275,7 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
       ref.invalidate(shiftsProvider);
       if (mounted) {
         setState(() => _exists = false);
-        showMessage(context, 'Horario quitado.');
+        showMessage(context, S.scheduleRemoved);
       }
     } catch (e) {
       if (mounted) showMessage(context, '$e', error: true);
@@ -295,12 +295,12 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
     _load(shifts.value);
     final overnight = _end.hour * 60 + _end.minute < _start.hour * 60 + _start.minute;
     return Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
-      Text('Obra y horario', style: t.textTheme.titleMedium),
+      Text(S.siteAndSchedule, style: t.textTheme.titleMedium),
       const SizedBox(height: Space.md),
       DropdownButtonFormField<int>(
         initialValue: _worksiteId,
         isExpanded: true,
-        decoration: const InputDecoration(labelText: 'Obra *', prefixIcon: Icon(Icons.location_city_outlined)),
+        decoration: const InputDecoration(labelText: S.jobSiteRequired, prefixIcon: Icon(Icons.location_city_outlined)),
         items: [for (final w in sites) DropdownMenuItem(value: w.id, child: Text(w.name))],
         onChanged: (v) => setState(() => _worksiteId = v),
       ),
@@ -310,7 +310,7 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
           child: OutlinedButton.icon(
             onPressed: () => _pick(true),
             icon: const Icon(Icons.login),
-            label: Text('Entrada ${_fmt(_start)}'),
+            label: Text(S.startAt(_start.format(context))),
           ),
         ),
         const SizedBox(width: Space.md),
@@ -318,16 +318,16 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
           child: OutlinedButton.icon(
             onPressed: () => _pick(false),
             icon: const Icon(Icons.logout),
-            label: Text('Salida ${_fmt(_end)}'),
+            label: Text(S.endAt(_end.format(context))),
           ),
         ),
       ]),
       if (overnight) ...[
         const SizedBox(height: Space.sm),
-        const StatusBadge(label: 'Turno nocturno: termina al día siguiente', icon: Icons.nightlight_outlined, tone: Tone.info, dense: true),
+        const StatusBadge(label: S.overnight, icon: Icons.nightlight_outlined, tone: Tone.info, dense: true),
       ],
       const SizedBox(height: Space.lg),
-      Text('Días de trabajo', style: t.textTheme.labelLarge),
+      Text(S.workDays, style: t.textTheme.labelLarge),
       const SizedBox(height: Space.sm),
       Wrap(spacing: Space.sm, runSpacing: Space.sm, children: [
         for (var i = 0; i < 7; i++)
@@ -339,24 +339,24 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
           ),
       ]),
       const SizedBox(height: Space.lg),
-      Text('Tolerancia: $_grace min', style: t.textTheme.labelLarge),
+      Text(S.grace(_grace), style: t.textTheme.labelLarge),
       Slider(
         value: _grace.toDouble(),
         min: 0,
         max: 60,
         divisions: 12,
         label: '$_grace min',
-        semanticFormatterCallback: (v) => '${v.round()} minutos de tolerancia',
+        semanticFormatterCallback: (v) => S.graceSemantics(v.round()),
         onChanged: (v) => setState(() => _grace = v.round()),
       ),
-      Text('Llegar después de la entrada + tolerancia cuenta como tarde; salir antes de la salida − tolerancia, como salida anticipada.',
+      Text(S.graceHelp,
           style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.onSurfaceVariant)),
       const SizedBox(height: Space.lg),
       FilledButton.tonal(
         onPressed: _saving ? null : _save,
         child: _saving
             ? const SizedBox.square(dimension: 20, child: CircularProgressIndicator(strokeWidth: 2))
-            : const Text('Guardar horario'),
+            : const Text(S.saveSchedule),
       ),
       if (_exists) ...[
         const SizedBox(height: Space.xl),
@@ -366,7 +366,7 @@ class _ShiftEditorState extends ConsumerState<_ShiftEditor> {
             onPressed: _remove,
             style: TextButton.styleFrom(foregroundColor: t.colorScheme.error),
             icon: const Icon(Icons.event_busy_outlined),
-            label: const Text('Quitar horario'),
+            label: const Text(S.removeSchedule),
           ),
         ),
       ],

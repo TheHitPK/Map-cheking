@@ -14,7 +14,7 @@ public record MarkAttempt(UUID clientId, long employeeId, MarkType type, Locatio
 
     public MarkAttempt {
         if (clientId == null || type == null || location == null || capturedAt == null) {
-            throw new InvalidInputException("Marca incompleta.");
+            throw new InvalidInputException("Incomplete punch.");
         }
     }
 }

@@ -2,6 +2,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../app/config.dart';
 import '../api/api_client.dart';
+import '../strings.dart';
 import 'session.dart';
 
 /// Overridden by each entry point.
@@ -35,9 +36,7 @@ class AuthController extends AsyncNotifier<Session?> {
     final session = Session.fromJson(json as Map<String, dynamic>);
     final expected = ref.read(appRoleProvider) == AppRole.worker ? 'WORKER' : 'SUPERVISOR';
     if (session.role != expected) {
-      throw ApiException(expected == 'WORKER'
-          ? 'Esta cuenta es de supervisor. Use la app o la web de supervisor.'
-          : 'Esta cuenta es de trabajador. Use la app de trabajador.');
+      throw ApiException(expected == 'WORKER' ? S.supervisorAccountInWorkerApp : S.workerAccountInSupervisorApp);
     }
     await ref.read(sessionStoreProvider).write(session);
     ref.read(logoutReasonProvider.notifier).set(null);
@@ -51,5 +50,5 @@ class AuthController extends AsyncNotifier<Session?> {
   }
 
   /// Call when any request returns 401.
-  Future<void> expire() => logout(reason: 'Su sesión expiró. Inicie sesión de nuevo.');
+  Future<void> expire() => logout(reason: S.sessionExpired);
 }

@@ -15,7 +15,7 @@ import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 
-/** Errors as RFC 9457 problem details; {@code detail} is user-facing (Spanish). */
+/** Errors as RFC 9457 problem details; {@code detail} is user-facing (English). */
 @RestControllerAdvice
 public class ApiExceptionHandler {
 
@@ -29,13 +29,13 @@ public class ApiExceptionHandler {
         String detail = e.getBindingResult().getFieldErrors().stream()
                 .findFirst()
                 .map(f -> f.getField() + ": " + f.getDefaultMessage())
-                .orElse("Datos inválidos.");
+                .orElse("Invalid data.");
         return problem(HttpStatus.BAD_REQUEST, detail);
     }
 
     @ExceptionHandler({HttpMessageNotReadableException.class, MethodArgumentTypeMismatchException.class})
     ProblemDetail unreadable(Exception e) {
-        return problem(HttpStatus.BAD_REQUEST, "Solicitud con formato inválido.");
+        return problem(HttpStatus.BAD_REQUEST, "Malformed request.");
     }
 
     @ExceptionHandler(NotFoundException.class)

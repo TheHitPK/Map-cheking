@@ -8,7 +8,7 @@ import org.springframework.boot.context.properties.bind.DefaultValue;
 
 @ConfigurationProperties("asistencia")
 public record AppProperties(
-        @DefaultValue("America/Caracas") ZoneId zone,
+        @DefaultValue("America/New_York") ZoneId zone,
         Auth auth,
         @DefaultValue Attendance attendance,
         @DefaultValue Cors cors) {

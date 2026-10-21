@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 420 100" role="img" aria-label="PinPunch">
+  <path d="M50 95C50 95 19 63 19 40A31 31 0 0 1 81 40C81 63 50 95 50 95Z" fill="#FFFFFF"/>
+  <path d="M36 41L46.5 51.5L65 30" fill="none" stroke="#FF6B1A" stroke-width="9" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="96" y="70" font-family="Roboto, Arial, sans-serif" font-weight="900" font-size="62" letter-spacing="-1"><tspan fill="#FFFFFF">Pin</tspan><tspan fill="#FF6B1A">Punch</tspan></text>
+</svg>
