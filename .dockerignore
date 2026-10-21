@@ -1,7 +1,2 @@
-# Only backend/, proto/ and data/maracaibo.osm.pbf are needed (backend/Dockerfile).
+# Images are built with backend/ as context (backend/.dockerignore applies there). Nothing at the root is needed.
 *
-!backend/
-!proto/
-!data/maracaibo.osm.pbf
-backend/target/
-backend/src/test/

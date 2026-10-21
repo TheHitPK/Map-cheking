@@ -1,0 +1,15 @@
+# Render (free plan). Environment variables come from render.yaml / the Render dashboard.
+server:
+  port: ${PORT:10000}
+  # Render's proxy terminates HTTPS; trust X-Forwarded-For so the login throttle sees the real client IP.
+  forward-headers-strategy: native
+
+spring:
+  datasource:
+    hikari:
+      maximum-pool-size: 4
+
+management:
+  endpoint:
+    health:
+      show-details: never

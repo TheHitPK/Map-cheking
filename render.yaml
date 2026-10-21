@@ -1,63 +1,47 @@
-# Render Blueprint (free plan): backend + Postgres (PostGIS) + Key Value. Broker: EMQX Serverless (see DEPLOY.md).
+# Render Blueprint (free plan): backend + Postgres. See DEPLOY.md.
 services:
   - type: web
-    name: transmcbo-api
+    name: asistencia-api
     runtime: docker
     plan: free
     region: virginia
     dockerfilePath: ./backend/Dockerfile
-    dockerContext: .
+    dockerContext: ./backend
     healthCheckPath: /actuator/health
     autoDeploy: true
     envVars:
+      - key: SPRING_PROFILES_ACTIVE
+        value: render
       - key: POSTGRES_HOST
         fromDatabase:
-          name: transmcbo-db
+          name: asistencia-db
           property: host
       - key: POSTGRES_PORT
         fromDatabase:
-          name: transmcbo-db
+          name: asistencia-db
           property: port
       - key: POSTGRES_DB
         fromDatabase:
-          name: transmcbo-db
+          name: asistencia-db
           property: database
       - key: POSTGRES_USER
         fromDatabase:
-          name: transmcbo-db
+          name: asistencia-db
           property: user
       - key: POSTGRES_PASSWORD
         fromDatabase:
-          name: transmcbo-db
+          name: asistencia-db
           property: password
-      - key: REDIS_URL
-        fromService:
-          type: keyvalue
-          name: transmcbo-kv
-          property: connectionString
-      - key: MQTT_JWT_SECRET
+      - key: JWT_SECRET
         generateValue: true
-      # Set these in the dashboard (Environment) after creating the EMQX Serverless deployment:
-      - key: MQTT_HOST
+      # Asked on the first deploy: password of the first supervisor (user "admin").
+      - key: BOOTSTRAP_ADMIN_PASSWORD
         sync: false
-      - key: MQTT_BACKEND_PASSWORD
-        sync: false
-      - key: MQTT_DRIVER_PASSWORD
-        sync: false
-      - key: MQTT_PASSENGER_PASSWORD
-        sync: false
-
-  - type: keyvalue
-    name: transmcbo-kv
-    plan: free
-    region: virginia
-    maxmemoryPolicy: noeviction
-    ipAllowList: [] # only reachable from inside Render
 
 databases:
-  - name: transmcbo-db
+  - name: asistencia-db
     plan: free
     region: virginia
-    databaseName: transmcbo
-    user: transmcbo
+    databaseName: asistencia
+    user: asistencia
     postgresMajorVersion: "16"

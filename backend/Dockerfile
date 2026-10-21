@@ -14,6 +14,7 @@ RUN addgroup -S app && adduser -S app -G app
 WORKDIR /app
 COPY --from=build /app.jar app.jar
 USER app
-ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=70 -XX:+UseSerialGC -XX:+ExitOnOutOfMemoryError"
+# Sized for Render free (512 MB, 0.1 CPU): serial GC, C1 only (much faster startup on a tiny CPU).
+ENV JAVA_TOOL_OPTIONS="-XX:MaxRAMPercentage=65 -XX:+UseSerialGC -XX:TieredStopAtLevel=1 -Xss512k -XX:MaxMetaspaceSize=160m -XX:ReservedCodeCacheSize=48m -XX:+ExitOnOutOfMemoryError"
 EXPOSE 8080
 ENTRYPOINT ["java", "-jar", "app.jar"]

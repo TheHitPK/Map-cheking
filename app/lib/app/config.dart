@@ -15,5 +15,6 @@ class AppConfig {
     return 'http://10.0.2.2:8080';
   }
 
-  static const requestTimeout = Duration(seconds: 15);
+  /// Long enough for a sleeping free-tier server to wake up (Render: 30–60 s). Marks never wait on it: they are queued first.
+  static const requestTimeout = Duration(seconds: 60);
 }
