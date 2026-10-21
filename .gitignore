@@ -5,7 +5,8 @@
 .gradle/
 build/
 target/
-out/
+# Only the IDE output dir at the root: a bare "out/" would also hide the hexagonal adapter/out/ packages.
+/out/
 *.class
 .idea/
 *.iml
