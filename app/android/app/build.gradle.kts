@@ -1,9 +1,3 @@
-import java.util.Properties
-
-val keystoreProperties = Properties().apply {
-    rootProject.file("key.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
-}
-
 plugins {
     id("com.android.application")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
@@ -11,7 +5,7 @@ plugins {
 }
 
 android {
-    namespace = "com.transmcbo"
+    namespace = "com.asistencia.asistencia"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
@@ -20,8 +14,27 @@ android {
         targetCompatibility = JavaVersion.VERSION_17
     }
 
+    buildFeatures {
+        resValues = true
+    }
+
+    // One codebase, two apps: flutter run --flavor trabajador -t lib/main_trabajador.dart
+    flavorDimensions += "role"
+    productFlavors {
+        create("trabajador") {
+            dimension = "role"
+            applicationIdSuffix = ".trabajador"
+            resValue("string", "app_name", "Asistencia")
+        }
+        create("supervisor") {
+            dimension = "role"
+            applicationIdSuffix = ".supervisor"
+            resValue("string", "app_name", "Asistencia Supervisor")
+        }
+    }
+
     defaultConfig {
-        applicationId = "com.transmcbo"
+        applicationId = "com.asistencia"
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion
@@ -34,41 +47,11 @@ android {
         versionName = flutter.versionName
     }
 
-    buildFeatures {
-        resValues = true
-    }
-
-    // One codebase, two apps: flutter run --flavor chofer -t lib/main_chofer.dart
-    flavorDimensions += "role"
-    productFlavors {
-        create("chofer") {
-            dimension = "role"
-            applicationIdSuffix = ".chofer"
-            resValue("string", "app_name", "TransMcbo Chofer")
-        }
-        create("pasajero") {
-            dimension = "role"
-            applicationIdSuffix = ".pasajero"
-            resValue("string", "app_name", "TransMcbo")
-        }
-    }
-
-    // Release key: android/key.properties + android/upload-keystore.jks (not in git; back them up).
-    signingConfigs {
-        create("release") {
-            if (keystoreProperties.isNotEmpty()) {
-                keyAlias = keystoreProperties.getProperty("keyAlias")
-                keyPassword = keystoreProperties.getProperty("keyPassword")
-                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
-                storePassword = keystoreProperties.getProperty("storePassword")
-            }
-        }
-    }
-
     buildTypes {
         release {
-            // Without key.properties (fresh clone) fall back to the debug key so the build still works.
-            signingConfig = signingConfigs.getByName(if (keystoreProperties.isNotEmpty()) "release" else "debug")
+            // TODO: Add your own signing config for the release build.
+            // Signing with the debug keys for now, so `flutter run --release` works.
+            signingConfig = signingConfigs.getByName("debug")
         }
     }
 }

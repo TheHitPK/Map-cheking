@@ -1,42 +1,43 @@
 spring:
   application:
-    name: transmcbo-backend
+    name: asistencia-backend
   threads:
     virtual:
       enabled: true
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5434}/${POSTGRES_DB:transmcbo}
-    username: ${POSTGRES_USER:transmcbo}
+    url: jdbc:postgresql://${POSTGRES_HOST:localhost}:${POSTGRES_PORT:5434}/${POSTGRES_DB:asistencia}
+    username: ${POSTGRES_USER:asistencia}
     password: ${POSTGRES_PASSWORD:change-me}
-  jpa:
-    open-in-view: false
-    hibernate:
-      ddl-auto: validate
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: 6379
 
 server:
   compression:
     enabled: true
-    mime-types: application/x-protobuf
+    mime-types: application/json,text/csv
     min-response-size: 1KB
 
-transmcbo:
-  mqtt:
-    host: ${MQTT_HOST:localhost}
-    port: ${MQTT_PORT:1883}
+asistencia:
+  # Official time zone for shifts and daily reports.
+  zone: America/Caracas
   auth:
-    # Shared with EMQX's JWT authenticator. Dev default only; set MQTT_JWT_SECRET in production.
-    jwt-secret: ${MQTT_JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
-    token-ttl: 1h
-    backend-token-ttl: 24h
-  ingest:
-    history-capacity: 10000
+    # Dev default only; set JWT_SECRET in production.
+    jwt-secret: ${JWT_SECRET:dev-only-secret-change-me-0123456789abcdef}
+    token-ttl: 12h
+    bootstrap-admin:
+      document: ${BOOTSTRAP_ADMIN_DOCUMENT:admin}
+      password: ${BOOTSTRAP_ADMIN_PASSWORD:}
+  attendance:
+    max-accuracy-meters: 50
+    # A mark sent later than this after capture is accepted but flagged as deferred (offline).
+    deferred-after: 2m
+    # Capture times further than this in the future (device clock ahead) are rejected.
+    max-clock-ahead: 2m
+    # Marks queued offline for longer than this are rejected.
+    max-deferral: 24h
+  cors:
+    allowed-origins: ${CORS_ORIGINS:http://localhost:*}
 
 management:
   endpoints:
     web:
       exposure:
-        include: health,prometheus
+        include: health

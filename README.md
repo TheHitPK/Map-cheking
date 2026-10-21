@@ -1,33 +1,65 @@
-# TransMcbo
+# Asistencia GPS
 
-Rastreo en vivo del transporte público de Maracaibo.
+Control de llegada y salida de trabajadores en obra. El trabajador marca desde su teléfono; el servidor verifica
+por GPS que esté dentro del radio de la obra y clasifica la marca según su horario.
 
 ```
-backend/   Spring Boot (Java 21, virtual threads)
-app/       Flutter (flavors chofer / pasajero + paquete core)
-proto/     Mensajes Protobuf (pos.proto)
-docker-compose.yml   postgis, redis, emqx
+backend/   Spring Boot 4 (Java 21), arquitectura hexagonal, PostgreSQL
+app/       Flutter: flavors trabajador / supervisor (el supervisor también en web)
+docker-compose.yml   postgres + backend
 ```
 
-## Infra local
+## Arranque local
 
 ```sh
-cp .env.example .env
-docker compose up -d
-docker compose ps   # los 3 servicios deben quedar "healthy"
+cp .env.example .env            # defina BOOTSTRAP_ADMIN_PASSWORD (primer supervisor)
+docker compose up -d --build    # API en http://localhost:8080
 ```
 
-- PostGIS: `localhost:5434` (no 5432, para no chocar con un PostgreSQL local)
-- Redis: `localhost:6379`
-- EMQX: MQTT `1883`, TLS `8883`, dashboard http://localhost:18083 (admin / `EMQX_DASHBOARD_PASSWORD`)
+Sin Docker para el backend: `docker compose up -d postgres` y `cd backend && ./mvnw spring-boot:run`
+(con `BOOTSTRAP_ADMIN_PASSWORD` en el entorno).
 
-## TLS
+Apps:
 
 ```sh
-bash tools/gen-dev-certs.sh          # CA + certificado ECDSA de desarrollo en certs/ (y app/assets/certs/dev-ca.pem)
-docker compose up -d emqx            # MQTT sobre TLS en 8883 (1883 en claro solo en desarrollo: MQTT_PLAIN=false lo apaga)
-cd backend && ./mvnw spring-boot:run -Dspring-boot.run.profiles=tls   # HTTPS en 8443, MQTT TLS hacia EMQX
+cd app
+flutter run --flavor trabajador -t lib/main_trabajador.dart          # Android
+flutter run --flavor supervisor -t lib/main_supervisor.dart          # Android
+flutter run -d chrome -t lib/main_supervisor.dart                    # Web
+# Otro servidor: --dart-define=API_URL=https://api.example.com
 ```
 
-Apps: `--dart-define=API_URL=https://<IP>:8443 --dart-define=MQTT_PORT=8883 --dart-define=MQTT_TLS=true --dart-define=DEV_CA=true`.
-En producción: certificado real y sin `DEV_CA`. `dart:io` no reanuda sesiones TLS: cada conexión cuesta un handshake completo (~1,6 KB con ECDSA).
+## Flujo
+
+1. El supervisor entra con `admin` / `BOOTSTRAP_ADMIN_PASSWORD`, crea la obra (centro en el mapa + radio) y los
+   trabajadores, y asigna a cada uno obra, horario, días y tolerancia.
+2. El trabajador abre la app, ve si está dentro de la obra y toca **Marcar llegada** / **Marcar salida**.
+3. El servidor acepta la marca o la rechaza (fuera de la obra, GPS impreciso o simulado, secuencia inválida…).
+   Los rechazos también se guardan para auditoría.
+4. El supervisor ve en **Hoy** quién llegó, tarde, ausente o en obra, y en **Reportes** exporta CSV.
+
+## Reglas
+
+| Regla | Valor por defecto (`application.yml`) |
+|---|---|
+| Dentro de la obra | distancia al centro ≤ radio (20–2000 m) |
+| Precisión GPS máxima | 50 m |
+| Ubicación simulada | rechazada (`isMocked` de Android) |
+| Hora oficial | la del servidor; si la marca llega > 2 min después de tomarse (sin señal), se usa la del teléfono y se marca como «sin conexión» |
+| Reloj del teléfono adelantado | > 2 min → rechazada |
+| Marca offline más vieja de | 24 h → rechazada |
+| Tarde | llegada > entrada + tolerancia |
+| Salida anticipada | salida < salida − tolerancia |
+
+## Tests
+
+```sh
+cd backend && ./mvnw verify      # JUnit 5 + Testcontainers (requiere Docker)
+cd app && flutter test
+```
+
+## Producción
+
+- `JWT_SECRET` aleatorio (≥ 32 bytes), HTTPS delante del backend, `CORS_ORIGINS` con el dominio del panel web.
+- Mapa del supervisor: usa los tiles públicos de OpenStreetMap, que no permiten uso intensivo. Para producción,
+  configure un proveedor propio (MapTiler, Stadia, servidor propio) en `worksite_editor_page.dart`.

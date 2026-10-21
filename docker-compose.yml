@@ -1,12 +1,12 @@
-name: transmcbo
+name: asistencia
 
 services:
-  postgis:
-    image: postgis/postgis:16-3.4
+  postgres:
+    image: postgres:16-alpine
     environment:
-      POSTGRES_DB: ${POSTGRES_DB}
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
+      POSTGRES_DB: ${POSTGRES_DB:-asistencia}
+      POSTGRES_USER: ${POSTGRES_USER:-asistencia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
     ports:
       - "${POSTGRES_PORT:-5434}:5432" # not 5432: often taken by a local PostgreSQL
     volumes:
@@ -17,56 +17,23 @@ services:
       timeout: 3s
       retries: 20
 
-  redis:
-    image: redis:7.4.1-alpine
-    command: ["redis-server", "--appendonly", "no", "--save", ""]
-    ports:
-      - "6379:6379"
-    healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
-      interval: 5s
-      timeout: 3s
-      retries: 20
-
-  emqx:
-    image: emqx/emqx:5.8.6
+  backend:
+    build: ./backend
     environment:
-      EMQX_DASHBOARD__DEFAULT_PASSWORD: ${EMQX_DASHBOARD_PASSWORD}
-      EMQX_MQTT__KEEPALIVE_MULTIPLIER: "1.5"
-      # JWT (HS256) issued by the backend, sent as the MQTT password. ACL comes from the `acl` claim.
-      EMQX_AUTHENTICATION__1__MECHANISM: jwt
-      EMQX_AUTHENTICATION__1__FROM: password
-      EMQX_AUTHENTICATION__1__USE_JWKS: "false"
-      EMQX_AUTHENTICATION__1__ALGORITHM: hmac-based
-      EMQX_AUTHENTICATION__1__SECRET: ${MQTT_JWT_SECRET}
-      EMQX_AUTHENTICATION__1__SECRET_BASE64_ENCODED: "false"
-      EMQX_AUTHENTICATION__1__DISCONNECT_AFTER_EXPIRE: "true"
-      EMQX_AUTHORIZATION__NO_MATCH: deny
-      EMQX_AUTHORIZATION__SOURCES: "[]"
-      # TLS on 8883 (certs from tools/gen-dev-certs.sh; a real certificate in production).
-      EMQX_LISTENERS__SSL__DEFAULT__BIND: "0.0.0.0:8883"
-      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__CERTFILE: /opt/emqx/etc/dev-certs/server.crt
-      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__KEYFILE: /opt/emqx/etc/dev-certs/server.key
-      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__CACERTFILE: /opt/emqx/etc/dev-certs/ca.crt
-      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__VERSIONS: '["tlsv1.3","tlsv1.2"]'
-      # Session resumption: works for TLS 1.2 clients (JVM backend). EMQX does not expose TLS 1.3 tickets and
-      # dart:io keeps no client session cache, so the apps pay a full ECDSA handshake (~1.5 KB) per connection.
-      EMQX_LISTENERS__SSL__DEFAULT__SSL_OPTIONS__REUSE_SESSIONS: "true"
-      # Plain MQTT only for local development; set MQTT_PLAIN=false in production.
-      EMQX_LISTENERS__TCP__DEFAULT__ENABLE: ${MQTT_PLAIN:-true}
+      POSTGRES_HOST: postgres
+      POSTGRES_PORT: 5432
+      POSTGRES_DB: ${POSTGRES_DB:-asistencia}
+      POSTGRES_USER: ${POSTGRES_USER:-asistencia}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-change-me}
+      JWT_SECRET: ${JWT_SECRET:-dev-only-secret-change-me-0123456789abcdef}
+      BOOTSTRAP_ADMIN_DOCUMENT: ${BOOTSTRAP_ADMIN_DOCUMENT:-admin}
+      BOOTSTRAP_ADMIN_PASSWORD: ${BOOTSTRAP_ADMIN_PASSWORD:-}
+      CORS_ORIGINS: ${CORS_ORIGINS:-http://localhost:*}
     ports:
-      - "1883:1883"   # MQTT
-      - "8883:8883"   # MQTT over TLS
-      - "18083:18083" # dashboard
-    volumes:
-      - emqxdata:/opt/emqx/data
-      - ./certs:/opt/emqx/etc/dev-certs:ro
-    healthcheck:
-      test: ["CMD", "/opt/emqx/bin/emqx", "ctl", "status"]
-      interval: 10s
-      timeout: 5s
-      retries: 20
+      - "8080:8080"
+    depends_on:
+      postgres:
+        condition: service_healthy
 
 volumes:
   pgdata:
-  emqxdata:
