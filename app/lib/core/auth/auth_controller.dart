@@ -1,12 +1,9 @@
+import 'package:flutter/foundation.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/config.dart';
 import '../api/api_client.dart';
 import '../strings.dart';
 import 'session.dart';
-
-/// Overridden by each entry point.
-final appRoleProvider = Provider<AppRole>((ref) => throw UnimplementedError('appRoleProvider not overridden'));
 
 final sessionStoreProvider = Provider<SessionStore>((ref) => SessionStore());
 
@@ -34,10 +31,8 @@ class AuthController extends AsyncNotifier<Session?> {
     final api = ref.read(apiClientProvider);
     final json = await api.post('/auth/login', {'document': document.trim(), 'password': password});
     final session = Session.fromJson(json as Map<String, dynamic>);
-    final expected = ref.read(appRoleProvider) == AppRole.worker ? 'WORKER' : 'SUPERVISOR';
-    if (session.role != expected) {
-      throw ApiException(expected == 'WORKER' ? S.supervisorAccountInWorkerApp : S.workerAccountInSupervisorApp);
-    }
+    // Punching needs the phone's GPS and fake-location checks: crews use the mobile app.
+    if (kIsWeb && session.isWorker) throw ApiException(S.crewUsePhone);
     await ref.read(sessionStoreProvider).write(session);
     ref.read(logoutReasonProvider.notifier).set(null);
     state = AsyncData(session);

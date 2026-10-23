@@ -4,6 +4,7 @@ import 'package:flutter_riverpod/flutter_riverpod.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/brand/brand.dart';
 import '../../../core/strings.dart';
+import '../../payroll/presentation/payroll_page.dart';
 import 'employees_page.dart';
 import 'reports_page.dart';
 import 'today_page.dart';
@@ -24,10 +25,11 @@ class _SupervisorShellState extends ConsumerState<SupervisorShell> {
     (icon: Icons.today_outlined, selected: Icons.today, label: S.navToday),
     (icon: Icons.location_city_outlined, selected: Icons.location_city, label: S.navSites),
     (icon: Icons.groups_outlined, selected: Icons.groups, label: S.navCrew),
+    (icon: Icons.payments_outlined, selected: Icons.payments, label: S.navPayroll),
     (icon: Icons.assessment_outlined, selected: Icons.assessment, label: S.reportsTitle),
   ];
 
-  static const _pages = [TodayPage(), WorksitesPage(), EmployeesPage(), ReportsPage()];
+  static const _pages = [TodayPage(), WorksitesPage(), EmployeesPage(), PayrollPage(), ReportsPage()];
 
   Future<void> _logout() async {
     final ok = await showDialog<bool>(
@@ -71,7 +73,7 @@ class _SupervisorShellState extends ConsumerState<SupervisorShell> {
           labelType: width >= 1200 ? NavigationRailLabelType.none : NavigationRailLabelType.all,
           leading: Padding(
             padding: const EdgeInsets.symmetric(vertical: 16),
-            child: Tooltip(message: S.supervisorAppName, child: PinPunchMark(size: 36)),
+            child: Tooltip(message: S.appName, child: PinPunchMark(size: 36)),
           ),
           trailing: Expanded(
             child: Align(

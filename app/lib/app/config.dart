@@ -1,8 +1,5 @@
 import 'package:flutter/foundation.dart';
 
-/// Which app this build is. Set by the entry point (main_trabajador / main_supervisor).
-enum AppRole { worker, supervisor }
-
 class AppConfig {
   const AppConfig._();
 

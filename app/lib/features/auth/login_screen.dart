@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
-import '../../app/config.dart';
 import '../../app/theme.dart';
 import '../../core/auth/auth_controller.dart';
 import '../../core/brand/brand.dart';
@@ -50,7 +49,6 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
   @override
   Widget build(BuildContext context) {
     final t = Theme.of(context);
-    final worker = ref.watch(appRoleProvider) == AppRole.worker;
     final reason = ref.watch(logoutReasonProvider);
     final error = _error ?? reason;
     return Scaffold(
@@ -66,9 +64,9 @@ class _LoginScreenState extends ConsumerState<LoginScreen> {
                   child: Column(crossAxisAlignment: CrossAxisAlignment.stretch, children: [
                     const Center(child: RouteToPinHero(size: 120)),
                     const SizedBox(height: Space.lg),
-                    Center(child: PinPunchWordmark(fontSize: 34, subtitle: worker ? null : S.supervisor)),
+                    Center(child: PinPunchWordmark(fontSize: 34)),
                     const SizedBox(height: Space.sm),
-                    Text(worker ? S.tagline : S.supervisorLoginHint,
+                    Text(S.tagline,
                         style: t.textTheme.bodyLarge?.copyWith(color: t.colorScheme.onSurfaceVariant),
                         textAlign: TextAlign.center),
                     const SizedBox(height: Space.xxl),

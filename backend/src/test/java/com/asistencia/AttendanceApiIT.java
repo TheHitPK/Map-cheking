@@ -85,7 +85,7 @@ class AttendanceApiIT {
         long site = call("POST", "/worksites", admin, java.util.Map.of("name", "Obra Norte", "address", "Av. 5 de Julio",
                 "lat", LAT, "lon", LON, "radiusMeters", 100)).body().get("id").asLong();
         Res worker = call("POST", "/employees", admin, java.util.Map.of("document", "V-12345678",
-                "fullName", "Ana Pérez", "role", "WORKER", "password", "clave-123"));
+                "fullName", "Ana Pérez", "role", "WORKER", "password", "clave-123", "hourlyRateCents", 2400));
         assertThat(worker.status()).isEqualTo(201);
         long workerId = worker.body().get("id").asLong();
         assertThat(call("POST", "/employees", admin, java.util.Map.of("document", "v-12345678",
@@ -136,5 +136,31 @@ class AttendanceApiIT {
         Res csv = call("GET", "/attendance/marks?from=" + d.minusDays(1) + "&to=" + d.plusDays(1), admin, null, "text/csv");
         assertThat(csv.status()).isEqualTo(200);
         assertThat(csv.raw()).contains("\"Ana Pérez\"", "OUT_OF_ZONE", "EARLY_LEAVE");
+
+        // Payroll: this week is an estimate; last week (nothing worked) can be paid once.
+        Res week = call("GET", "/payroll?date=" + d, admin, null);
+        assertThat(week.status()).isEqualTo(200);
+        assertThat(week.body().get("paid").asBoolean()).isFalse();
+        JsonNode line = week.body().get("lines").get(0);
+        assertThat(line.get("fullName").asString()).isEqualTo("Ana Pérez");
+        assertThat(line.get("pay").get("hourlyRateCents").asInt()).isEqualTo(2400);
+        assertThat(call("GET", "/payroll?date=" + d, token, null).status()).isEqualTo(403);
+
+        LocalDate thisMonday = LocalDate.parse(week.body().get("periodStart").asString());
+        assertThat(call("POST", "/payroll/" + thisMonday + "/pay", admin, java.util.Map.of("paidOn", d.toString())).status())
+                .isEqualTo(400);
+        LocalDate lastMonday = thisMonday.minusWeeks(1);
+        Res paid = call("POST", "/payroll/" + lastMonday + "/pay", admin, java.util.Map.of("paidOn", d.toString()));
+        assertThat(paid.status()).isEqualTo(200);
+        assertThat(paid.body().get("paid").asBoolean()).isTrue();
+        assertThat(call("POST", "/payroll/" + lastMonday + "/pay", admin, java.util.Map.of("paidOn", d.toString())).status())
+                .isEqualTo(409);
+
+        Res mine = call("GET", "/me/pay", token, null);
+        assertThat(mine.status()).isEqualTo(200);
+        assertThat(mine.body().get("hourlyRateCents").asInt()).isEqualTo(2400);
+        assertThat(mine.body().get("current").get("periodStart").asString()).isEqualTo(thisMonday.toString());
+        assertThat(mine.body().get("previous").get("paid").asBoolean()).isTrue();
+        assertThat(call("GET", "/me/pay", admin, null).status()).isEqualTo(403);
     }
 }

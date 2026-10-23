@@ -18,23 +18,9 @@ android {
         resValues = true
     }
 
-    // One codebase, two apps: flutter run --flavor trabajador -t lib/main_trabajador.dart
-    flavorDimensions += "role"
-    productFlavors {
-        create("trabajador") {
-            dimension = "role"
-            applicationIdSuffix = ".crew"
-            resValue("string", "app_name", "PinPunch")
-        }
-        create("supervisor") {
-            dimension = "role"
-            applicationIdSuffix = ".supervisor"
-            resValue("string", "app_name", "PinPunch Supervisor")
-        }
-    }
-
     defaultConfig {
         applicationId = "com.pinpunch"
+        resValue("string", "app_name", "PinPunch")
         // You can update the following values to match your application needs.
         // For more information, see: https://flutter.dev/to/review-gradle-config.
         minSdk = flutter.minSdkVersion

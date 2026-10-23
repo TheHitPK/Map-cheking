@@ -1,5 +1,5 @@
 {
-    "name": "PinPunch Supervisor",
+    "name": "PinPunch",
     "short_name": "PinPunch",
     "start_url": ".",
     "display": "standalone",

@@ -49,4 +49,45 @@ abstract final class Fmt {
     if (idx.length == 6 && idx.last == 5) return 'Mon–Sat';
     return idx.map((i) => dayShort[i]).join(', ');
   }
+
+  /// "Oct 19 – 25" in one month, "Oct 26 – Nov 1" across two.
+  static String dayRange(DateTime from, DateTime to) => from.month == to.month
+      ? '${_months[from.month - 1]} ${from.day} – ${to.day}'
+      : '${_months[from.month - 1]} ${from.day} – ${_months[to.month - 1]} ${to.day}';
+
+  /// Date-only value from the API ("2026-10-19"), as a local calendar date.
+  static DateTime apiDate(String iso) {
+    final p = iso.split('-').map(int.parse).toList();
+    return DateTime(p[0], p[1], p[2]);
+  }
+
+  // Money is kept in US cents (int) everywhere; format only for display.
+
+  static String _grouped(int n) => n.toString().replaceAllMapped(RegExp(r'\B(?=(\d{3})+(?!\d))'), (_) => ',');
+
+  /// "$1,234.56".
+  static String money(int cents) =>
+      '${cents < 0 ? '-' : ''}\$${_grouped(cents.abs() ~/ 100)}.${two(cents.abs() % 100)}';
+
+  /// "$25.50/hr".
+  static String rate(int cents) => '${money(cents)}/hr';
+
+  /// "25.50" for an input field.
+  static String decimal(int cents) => '${cents ~/ 100}.${two(cents % 100)}';
+
+  /// Cents from what a person types: "25", "25.5", "$25.50", "1,000". Null if it isn't a valid amount.
+  static int? parseCents(String text) {
+    final m = RegExp(r'^\$?\s*(\d{1,3}(?:,\d{3})*|\d+)(?:\.(\d{1,2}))?$').firstMatch(text.trim());
+    if (m == null) return null;
+    final dollars = int.parse(m[1]!.replaceAll(',', ''));
+    final cents = m[2] == null ? 0 : int.parse(m[2]!.padRight(2, '0'));
+    return dollars * 100 + cents;
+  }
+
+  /// Worked time: "8h 33m", "40h", "45m", "0h".
+  static String hours(int minutes) {
+    final h = minutes ~/ 60, m = minutes % 60;
+    if (h == 0 && m > 0) return '${m}m';
+    return m == 0 ? '${h}h' : '${h}h ${m}m';
+  }
 }

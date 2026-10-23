@@ -28,14 +28,15 @@ public class EmployeeService {
         return employees.findById(id).orElseThrow(() -> new NotFoundException("Employee not found."));
     }
 
-    public Employee create(String document, String fullName, Role role, String password) {
-        Employee e = new Employee(null, document, fullName, role, null, true);
+    public Employee create(String document, String fullName, Role role, String password, Integer hourlyRateCents) {
+        Employee e = new Employee(null, document, fullName, role, null, true, hourlyRateCents);
         return employees.save(e.withPasswordHash(hasher.hash(validPassword(password))));
     }
 
-    public Employee update(long id, String fullName, Role role, boolean active) {
+    public Employee update(long id, String fullName, Role role, boolean active, Integer hourlyRateCents) {
         Employee current = get(id);
-        return employees.save(new Employee(id, current.document(), fullName, role, current.passwordHash(), active));
+        return employees.save(new Employee(id, current.document(), fullName, role, current.passwordHash(), active,
+                hourlyRateCents));
     }
 
     public void resetPassword(long id, String password) {
@@ -48,7 +49,7 @@ public class EmployeeService {
             return;
         }
         if (employees.findByDocument(document).isEmpty()) {
-            create(document, "Administrador", Role.SUPERVISOR, password);
+            create(document, "Administrator", Role.SUPERVISOR, password, null);
         }
     }
 

@@ -1,6 +1,6 @@
 # PinPunch — Reloj de asistencia GPS para obras (mercado EE. UU.)
 
-Marca: **PinPunch** · "Punch in where the work is." Apps: *PinPunch* (cuadrilla) y *PinPunch Supervisor* (app + web).
+Marca: **PinPunch** · "Punch in where the work is." Una sola app *PinPunch* (Android + web): el rol del login decide la pantalla.
 Paleta en `app/lib/core/brand/brand.dart` (Survey Navy `#0B2545`, Hi-Vis Orange `#FF6B1A`, Route Blue `#8DA9C4`,
 Concrete `#F5F3EE`). Logos SVG en `brand/`. Íconos y splash se generan con `flutter test tool/generate_icons_test.dart`.
 El paquete Java / Dart sigue llamándose `asistencia` (interno).
@@ -8,7 +8,10 @@ El paquete Java / Dart sigue llamándose `asistencia` (interno).
 ## Objetivo MVP
 El trabajador marca llegada y salida desde su teléfono; el backend verifica por GPS que esté dentro del radio de la obra
 y clasifica la marca según su horario (a tiempo, tarde, salida anticipada). El supervisor ve la asistencia del día,
-gestiona obras, personal y horarios (app Android y web).
+gestiona obras, personal, horarios y nómina (app Android y web).
+Nómina: semana lunes–domingo, pago por defecto el viernes siguiente; horas = pares IN/OUT aceptados (minutos de reloj),
+extras 1.5× sobre 40 h/semana; tarifa por hora en centavos (`employee.hourly_rate_cents`). Al marcar pagada se congela
+(`pay_period`, `payroll_line`). Montos brutos, sin impuestos. Sesión sin salida = no se paga hasta corregirla.
 
 ## Restricciones
 - Android gama baja, señal intermitente: la marca se guarda offline y se envía después.
@@ -22,14 +25,14 @@ gestiona obras, personal y horarios (app Android y web).
 ## Stack
 - Backend: Spring Boot 4, Java 21, virtual threads. Spring Security (resource server, JWT HS256 con Nimbus).
   JDBC (`JdbcClient`) + Flyway + PostgreSQL 16. Distancia con Haversine en el dominio.
-- Apps: Flutter, un proyecto en `app/` con flavors Android `trabajador` / `supervisor`; el supervisor también compila
-  para web (`-t lib/main_supervisor.dart`). Dependencias: `flutter_riverpod`, `http`, `geolocator`, `flutter_map` +
+- App: Flutter, un proyecto en `app/` y un solo APK (`lib/main.dart`); `WORKER` → marcar + My pay, `SUPERVISOR` →
+  panel. Web solo para supervisores. Dependencias: `flutter_riverpod`, `http`, `geolocator`, `flutter_map` +
   `latlong2` (tiles OSM, solo supervisor), `shared_preferences` (cola offline y caché), `flutter_secure_storage` (token),
   `flutter_localizations` (SDK, locale en-US).
 - Infra local: docker-compose (postgres, backend).
 
 ## Arquitectura
-- Backend hexagonal por módulo (`employee`, `worksite`, `schedule`, `attendance`, `auth`):
+- Backend hexagonal por módulo (`employee`, `worksite`, `schedule`, `attendance`, `payroll`, `auth`):
   `domain` (Java puro, sin Spring) → `application` (casos de uso + puertos `out`) → `adapter/in/web`, `adapter/out/persistence`.
   Spring conecta los casos de uso en `config/ModulesConfig` (los adaptadores son `@Repository`/`@Component`). Reglas de marca = `MarkRule` (estrategia; una regla nueva no toca las otras).
 - Flutter feature-first + MVVM: `features/<x>/{data,application,presentation}`; ViewModel = `Notifier` de riverpod.
@@ -39,6 +42,7 @@ gestiona obras, personal y horarios (app Android y web).
 - Trabajador: `GET /me/today`, `POST /me/marks` (idempotente por `clientId`).
 - Supervisor: CRUD `/worksites`, `/employees`, `/schedules`; `GET /attendance/daily?date&worksiteId`;
   `GET /attendance/marks?from&to` (`.csv` con `Accept: text/csv`).
+- Nómina: `GET /payroll?date` (semana que contiene la fecha), `POST /payroll/{lunes}/pay` `{paidOn}`; empleado: `GET /me/pay`.
 
 ## Convenciones para Claude
 - Respuestas breves; no expliques lo obvio.

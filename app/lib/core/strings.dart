@@ -2,7 +2,6 @@
 abstract final class S {
   // Brand
   static const appName = 'PinPunch';
-  static const supervisorAppName = 'PinPunch Supervisor';
   static const tagline = 'Punch in where the work is.';
 
   // Common
@@ -32,10 +31,7 @@ abstract final class S {
   static const showPassword = 'Show password';
   static const hidePassword = 'Hide password';
   static const signIn = 'Sign in';
-  static const workerLoginHint = 'Punch in and out at your job site.';
-  static const supervisorLoginHint = 'Crew attendance by job site.';
-  static const supervisorAccountInWorkerApp = 'This is a supervisor account. Use the PinPunch Supervisor app or web.';
-  static const workerAccountInSupervisorApp = 'This is a crew account. Use the PinPunch app.';
+  static const crewUsePhone = 'Crew members punch in from the PinPunch app on their phone.';
 
   // Location disclosure (Google Play prominent disclosure + US state notice laws)
   static const disclosureTitle = 'PinPunch uses your location';
@@ -219,4 +215,57 @@ abstract final class S {
   static const offline = 'Offline';
   static const onSiteBadge = 'On site';
   static String csvCopied(int n) => 'Table copied ($n rows). Paste it into Excel or Google Sheets.';
+
+  // Pay (shared)
+  static const hourlyRate = 'Hourly rate';
+  static const perHour = '/hr';
+  static const hourlyRateHelp = 'Gross pay per hour. Over 40 hours a week is paid at 1.5×.';
+  static const hourlyRateInvalid = r'Enter an amount like 18.50 (up to $1,000)';
+  static const regular = 'Regular';
+  static String overtime(String h) => 'Overtime $h (1.5×)';
+  static const overtimeLabel = 'Overtime (1.5×)';
+  static const rateLabel = 'Rate';
+  static const grossLabel = 'Gross pay';
+  static const estGross = 'Estimated gross pay';
+  static const noRate = 'No hourly rate';
+  static const grossDisclaimer = 'Gross pay before taxes and deductions. Your paycheck may be lower.';
+  static String missingPunchOuts(int n) =>
+      n == 1 ? '1 shift without punch-out (not counted)' : '$n shifts without punch-out (not counted)';
+  static const stillPunchedIn = 'Punched in — time still adding up';
+  static String paidOn(String day) => 'Paid $day';
+  static String payday(String day) => 'Payday $day';
+  static const inProgressWeek = 'Week in progress';
+
+  // My pay (crew)
+  static const navPunch = 'Punch';
+  static const navMyPay = 'My pay';
+  static const myPayTitle = 'My pay';
+  static const nextPaycheck = 'Next paycheck';
+  static const thisWeekSoFar = 'This week so far';
+  static String forWeek(String range, String hours) => 'For $range · $hours worked';
+  static const thisWeek = 'This week';
+  static const noTimeYet = 'No time this week yet. Punch in at your job site to start.';
+  static const rateNotSet = "Your hourly rate isn't set yet. Ask your supervisor.";
+  static const missingPunchOutHelp = 'Ask your supervisor to fix shifts without a punch-out so they get paid.';
+  static const pastPaychecks = 'Past paychecks';
+  static const noPaychecksYet = 'Paid weeks will show up here.';
+
+  // Payroll (supervisor)
+  static const navPayroll = 'Payroll';
+  static const payrollTitle = 'Payroll';
+  static const previousWeek = 'Previous week';
+  static const nextWeek = 'Next week';
+  static String crewCount(int n) => n == 1 ? '1 crew member' : '$n crew members';
+  static String hoursTotal(String h) => '$h worked';
+  static const markAsPaid = 'Mark as paid';
+  static String markPaidQuestion(String range) => 'Mark $range as paid?';
+  static String markPaidBody(String total) =>
+      "Total gross: $total. Amounts are frozen and crew members see this week as paid. This can't be undone.";
+  static const paidOnLabel = 'Paid on';
+  static String markedPaid(String range) => '$range marked as paid.';
+  static const weekNotOver = 'You can mark this week as paid after it ends on Sunday.';
+  static const noCrewInWeek = 'No crew time this week';
+  static const noCrewInWeekHelp = 'Hours appear here as crew members punch in and out.';
+  static String withoutRate(int n) => n == 1 ? '1 crew member without hourly rate' : '$n crew members without hourly rate';
+  static const setRatesFirst = 'Set the hourly rate in Crew before marking this week as paid.';
 }

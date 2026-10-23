@@ -1,7 +1,7 @@
 # Despliegue: Render (gratis)
 
 ```
-App trabajador / supervisor ──HTTPS──▶ Render: asistencia-api (Docker, free) ──▶ Render Postgres 16 (free)
+App PinPunch (empleado o supervisor) ──HTTPS──▶ Render: asistencia-api (Docker, free) ──▶ Render Postgres 16 (free)
 ```
 
 ## 1. Crear los servicios
@@ -25,14 +25,15 @@ Para evitar la espera: [UptimeRobot](https://uptimerobot.com) → monitor HTTP a
 
 ```sh
 cd app
-flutter build apk --release --split-per-abi --flavor trabajador -t lib/main_trabajador.dart --dart-define=API_URL=https://asistencia-api.onrender.com
-flutter build apk --release --split-per-abi --flavor supervisor -t lib/main_supervisor.dart --dart-define=API_URL=https://asistencia-api.onrender.com
+flutter build apk --release --split-per-abi --dart-define=API_URL=https://asistencia-api.onrender.com
 ```
 
-Salida en `app/build/app/outputs/flutter-apk/`: `app-arm64-v8a-trabajador-release.apk` (casi todos los teléfonos)
+Salida en `app/build/app/outputs/flutter-apk/`: `app-arm64-v8a-release.apk` (casi todos los teléfonos)
 y `app-armeabi-v7a-…` (teléfonos viejos de 32 bits).
 
-Panel web del supervisor apuntando a Render: `flutter run -d chrome -t lib/main_supervisor.dart --dart-define=API_URL=https://asistencia-api.onrender.com`.
+Un solo APK para todos: el rol con que se inicia sesión decide la pantalla (empleado o supervisor).
+
+Panel web del supervisor apuntando a Render: `flutter run -d chrome --dart-define=API_URL=https://asistencia-api.onrender.com`.
 Para publicarlo en un dominio, agrega ese origen a `CORS_ORIGINS` en Render (p. ej. `https://panel.midominio.com`).
 
 ## Limitaciones del plan gratuito

@@ -16,6 +16,8 @@ import com.asistencia.auth.application.port.TokenIssuer;
 import com.asistencia.employee.application.EmployeeService;
 import com.asistencia.employee.application.port.EmployeeRepository;
 import com.asistencia.employee.application.port.PasswordHasher;
+import com.asistencia.payroll.application.PayrollService;
+import com.asistencia.payroll.application.port.PayrollRepository;
 import com.asistencia.schedule.application.ScheduleService;
 import com.asistencia.schedule.application.port.ShiftRepository;
 import com.asistencia.shared.application.UnitOfWork;
@@ -71,6 +73,13 @@ public class ModulesConfig {
                                                   ShiftRepository shifts, WorksiteRepository worksites,
                                                   SequenceRule sequence, Clock clock, AppProperties props) {
         return new AttendanceQueryService(marks, employees, shifts, worksites, sequence, clock, props.zone());
+    }
+
+    @Bean
+    PayrollService payrollService(MarkRepository marks, EmployeeRepository employees, PayrollRepository payroll,
+                                  UnitOfWork uow, Clock clock, AppProperties props) {
+        return new PayrollService(marks, employees, payroll, uow, clock, props.zone(),
+                props.attendance().forgottenCheckoutAfter());
     }
 
     @Bean

@@ -3,12 +3,15 @@
 import 'dart:io';
 import 'dart:ui' as ui;
 
-import 'package:asistencia/app/config.dart';
 import 'package:asistencia/app/theme.dart';
 import 'package:asistencia/core/auth/auth_controller.dart';
 import 'package:asistencia/core/auth/session.dart';
 import 'package:asistencia/core/models.dart';
 import 'package:asistencia/features/auth/login_screen.dart';
+import 'package:asistencia/features/payroll/data/payroll_api.dart';
+import 'package:asistencia/features/payroll/data/payroll_models.dart';
+import 'package:asistencia/features/payroll/presentation/my_pay_page.dart';
+import 'package:asistencia/features/payroll/presentation/payroll_page.dart';
 import 'package:asistencia/features/supervisor/data/supervisor_api.dart';
 import 'package:asistencia/features/supervisor/data/supervisor_models.dart';
 import 'package:asistencia/features/supervisor/presentation/supervisor_shell.dart';
@@ -128,9 +131,9 @@ void main() {
   });
 
   testWidgets('screens', (tester) async {
-    final worker = [appRoleProvider.overrideWithValue(AppRole.worker), authProvider.overrideWith(_Auth.new)];
+    final worker = [authProvider.overrideWith(_Auth.new)];
 
-    await _shot(tester, '1_login_worker', const LoginScreen(), [appRoleProvider.overrideWithValue(AppRole.worker), authProvider.overrideWith(_NoAuth.new)]);
+    await _shot(tester, '1_login', const LoginScreen(), [authProvider.overrideWith(_NoAuth.new)]);
     await _shot(tester, '2_disclosure', const LocationDisclosureGate(child: SizedBox()), [...worker, locationDisclosureProvider.overrideWith(_Disclosure.new)]);
 
     final onSite = WorkerState(
@@ -165,12 +168,52 @@ void main() {
       row('Marcus Johnson', 'ON_TIME', inMark: m('IN', 'ON_TIME', 6, 58), outMark: m('OUT', 'ON_TIME', 15, 34)),
     ];
     final supervisor = [
-      appRoleProvider.overrideWithValue(AppRole.supervisor),
       authProvider.overrideWith(_Auth.new),
       dailyProvider.overrideWith((ref, q) async => rows),
       worksitesProvider.overrideWith((ref) async => [_site]),
     ];
     await _shot(tester, '5_supervisor_web', const SupervisorShell(), supervisor, size: const Size(1280, 800));
     await _shot(tester, '6_supervisor_phone', const SupervisorShell(), supervisor);
+
+    // Pay: last week unpaid (41h 30m at $24), this week in progress.
+    final monday = mondayOf(_now);
+    DateTime d(DateTime base, int days) => DateTime(base.year, base.month, base.day + days);
+    final lastMonday = d(monday, -7);
+    List<DayMinutes> week(DateTime start, List<int> mins) => [for (final (i, m) in mins.indexed) (date: d(start, i), minutes: m)];
+    Pay pay(int minutes, int? rate) {
+      final reg = minutes < 2400 ? minutes : 2400, ot = minutes - reg;
+      return Pay(regularMinutes: reg, overtimeMinutes: ot, hourlyRateCents: rate,
+          grossCents: rate == null ? null : (rate * (2 * reg + 3 * ot) + 60) ~/ 120);
+    }
+    final myPay = MyPay(
+      hourlyRateCents: 2400,
+      previous: PayStub(periodStart: lastMonday, periodEnd: d(lastMonday, 6), paid: false, payDate: d(lastMonday, 11),
+          pay: pay(2490, 2400), days: week(lastMonday, [510, 498, 522, 480, 480]), missingPunchOuts: 0, punchedIn: false),
+      current: PayStub(periodStart: monday, periodEnd: d(monday, 6), paid: false, payDate: d(monday, 11),
+          pay: pay(1222, 2400), days: week(monday, [513, 480, 229]), missingPunchOuts: 1, punchedIn: true),
+      history: [
+        PaidWeek(periodStart: d(lastMonday, -7), periodEnd: d(lastMonday, -1), paidOn: d(lastMonday, 4), pay: pay(2400, 2400)),
+        PaidWeek(periodStart: d(lastMonday, -14), periodEnd: d(lastMonday, -8), paidOn: d(lastMonday, -3), pay: pay(2280, 2300)),
+      ],
+    );
+    await _shot(tester, '7_my_pay', const MyPayPage(), [...worker, myPayProvider.overrideWith((ref) async => myPay)]);
+    await _shot(tester, '8_my_pay_dark', const MyPayPage(), [...worker, myPayProvider.overrideWith((ref) async => myPay)],
+        brightness: Brightness.dark);
+
+    PayrollLine line(String name, int minutes, int? rate, {int missing = 0}) => PayrollLine(employeeId: name.hashCode,
+        fullName: name, document: 'E-1', active: true, pay: pay(minutes, rate), days: week(lastMonday, [minutes ~/ 5]),
+        missingPunchOuts: missing, punchedIn: false);
+    final lines = [
+      line('Ana Rodriguez', 2400, 2600),
+      line('Darnell Brooks', 2730, 2250),
+      line('Kevin Walsh', 1440, null, missing: 1),
+      line('Marcus Johnson', 2490, 2400),
+    ];
+    final payroll = Payroll(periodStart: lastMonday, periodEnd: d(lastMonday, 6), paid: false, payDate: d(lastMonday, 11),
+        totalGrossCents: lines.fold(0, (n, l) => n + (l.pay.grossCents ?? 0)),
+        totalMinutes: lines.fold(0, (n, l) => n + l.pay.totalMinutes), lines: lines);
+    final payrollOverrides = [authProvider.overrideWith(_Auth.new), payrollProvider.overrideWith((ref, monday) async => payroll)];
+    await _shot(tester, '9_payroll_web', const PayrollPage(), payrollOverrides, size: const Size(1280, 860));
+    await _shot(tester, '10_payroll_phone', const PayrollPage(), payrollOverrides);
   });
 }

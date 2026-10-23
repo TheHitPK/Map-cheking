@@ -23,6 +23,8 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
   late final _document = TextEditingController(text: widget.employee?.document);
   late final _name = TextEditingController(text: widget.employee?.fullName);
   final _password = TextEditingController();
+  late final _rate = TextEditingController(
+      text: widget.employee?.hourlyRateCents == null ? null : Fmt.decimal(widget.employee!.hourlyRateCents!));
   late String _role = widget.employee?.role ?? 'WORKER';
   late bool _active = widget.employee?.active ?? true;
   bool _saving = false;
@@ -30,9 +32,12 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
 
   bool get _isNew => widget.employee == null;
 
+  /// Only crew members are paid by the hour here; empty means "not set".
+  int? get _rateCents => _role == 'WORKER' ? Fmt.parseCents(_rate.text) : widget.employee?.hourlyRateCents;
+
   @override
   void dispose() {
-    for (final c in [_document, _name, _password]) {
+    for (final c in [_document, _name, _password, _rate]) {
       c.dispose();
     }
     super.dispose();
@@ -49,6 +54,7 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
           'fullName': _name.text.trim(),
           'role': _role,
           'password': _password.text,
+          'hourlyRateCents': _rateCents,
         });
         if (!mounted) return;
         showMessage(context, S.memberCreated(e.isWorker));
@@ -56,7 +62,8 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
         await Navigator.of(context).pushReplacement(MaterialPageRoute<bool>(builder: (_) => EmployeeEditorPage(employee: e)));
         return;
       }
-      await api.updateEmployee(widget.employee!.id, {'fullName': _name.text.trim(), 'role': _role, 'active': _active});
+      await api.updateEmployee(widget.employee!.id,
+          {'fullName': _name.text.trim(), 'role': _role, 'active': _active, 'hourlyRateCents': _rateCents});
       if (mounted) Navigator.pop(context, true);
     } catch (e) {
       if (mounted) showMessage(context, '$e', error: true);
@@ -139,6 +146,20 @@ class _EmployeeEditorPageState extends ConsumerState<EmployeeEditorPage> {
                     selected: {_role},
                     onSelectionChanged: (s) => setState(() => _role = s.first),
                   ),
+                  if (_role == 'WORKER') ...[
+                    const SizedBox(height: Space.lg),
+                    TextFormField(
+                      controller: _rate,
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                      decoration: const InputDecoration(
+                        labelText: S.hourlyRate,
+                        prefixText: '\$ ',
+                        suffixText: S.perHour,
+                        helperText: S.hourlyRateHelp,
+                      ),
+                      validator: (v) => (v?.trim().isEmpty ?? true) || Fmt.parseCents(v!) != null ? null : S.hourlyRateInvalid,
+                    ),
+                  ],
                   if (_isNew) ...[
                     const SizedBox(height: Space.lg),
                     TextFormField(
