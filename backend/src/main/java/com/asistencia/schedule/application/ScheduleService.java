@@ -27,17 +27,17 @@ public class ScheduleService {
 
     public Shift assign(Shift shift) {
         if (employees.get(shift.employeeId()).role() != Role.WORKER) {
-            throw new InvalidInputException("Solo se asignan horarios a trabajadores.");
+            throw new InvalidInputException("Schedules can only be assigned to workers.");
         }
         if (!worksites.get(shift.worksiteId()).active()) {
-            throw new InvalidInputException("La obra está inactiva.");
+            throw new InvalidInputException("The job site is inactive.");
         }
         return shifts.save(shift);
     }
 
     public void remove(long employeeId) {
         if (!shifts.deleteByEmployee(employeeId)) {
-            throw new NotFoundException("El empleado no tiene horario.");
+            throw new NotFoundException("The employee has no schedule.");
         }
     }
 }

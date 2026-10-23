@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 
 import '../../app/theme.dart';
+import '../strings.dart';
 
 enum Tone { success, warning, danger, neutral, info }
 
@@ -83,9 +84,9 @@ class ErrorState extends StatelessWidget {
   @override
   Widget build(BuildContext context) => EmptyState(
         icon: Icons.cloud_off_outlined,
-        title: 'No se pudo cargar',
+        title: S.couldNotLoad,
         message: message,
-        action: OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text('Reintentar')),
+        action: OutlinedButton.icon(onPressed: onRetry, icon: const Icon(Icons.refresh), label: const Text(S.retry)),
       );
 }
 
@@ -98,7 +99,14 @@ class MaxWidth extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) =>
-      Align(alignment: Alignment.topCenter, child: ConstrainedBox(constraints: BoxConstraints(maxWidth: width), child: child));
+      Align(
+        alignment: Alignment.topCenter,
+        child: ConstrainedBox(
+          constraints: BoxConstraints(maxWidth: width),
+          // Fill up to the cap so left-aligned content (filters, cards) lines up.
+          child: SizedBox(width: double.infinity, child: child),
+        ),
+      );
 }
 
 void showMessage(BuildContext context, String message, {bool error = false}) {

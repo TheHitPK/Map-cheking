@@ -28,13 +28,13 @@ public record Shift(Long id, long employeeId, long worksiteId, LocalTime start, 
 
     public Shift {
         if (start == null || end == null || start.equals(end)) {
-            throw new InvalidInputException("Hora de entrada y salida requeridas y distintas.");
+            throw new InvalidInputException("Start and end times are required and must differ.");
         }
         if (days == null || days.isEmpty()) {
-            throw new InvalidInputException("Seleccione al menos un día.");
+            throw new InvalidInputException("Select at least one day.");
         }
         if (graceMinutes < 0 || graceMinutes > 120) {
-            throw new InvalidInputException("La tolerancia debe estar entre 0 y 120 minutos.");
+            throw new InvalidInputException("Grace period must be 0 to 120 minutes.");
         }
         days = Set.copyOf(EnumSet.copyOf(days));
     }

@@ -6,6 +6,7 @@ import '../../../core/api/api_client.dart';
 import '../../../core/auth/auth_controller.dart';
 import '../../../core/geo.dart';
 import '../../../core/models.dart';
+import '../../../core/strings.dart';
 import '../data/location_service.dart';
 import '../data/offline_queue.dart';
 import '../data/worker_repository.dart';
@@ -160,14 +161,13 @@ class WorkerController extends Notifier<WorkerState> {
       final issue = await _location.ensureReady();
       if (issue != null) {
         state = state.copyWith(locationIssue: () => issue);
-        return _done(const MarkOutcome(OutcomeKind.error, 'Ubicación no disponible', 'Active el GPS y dé permiso de ubicación.'));
+        return _done(const MarkOutcome(OutcomeKind.error, S.locationUnavailable, S.locationUnavailableHelp));
       }
       final Fix fix;
       try {
         fix = await _location.current();
       } catch (_) {
-        return _done(const MarkOutcome(
-            OutcomeKind.error, 'No se obtuvo señal GPS', 'Salga a cielo abierto, espere unos segundos e intente de nuevo.'));
+        return _done(const MarkOutcome(OutcomeKind.error, S.noGpsFix, S.noGpsFixHelp));
       }
       final type = state.next;
       final pending = PendingMark(
@@ -182,7 +182,7 @@ class WorkerController extends Notifier<WorkerState> {
       try {
         await _repo.queue.add(pending); // persisted first: never lost, even if the app closes now
       } on ApiException catch (e) {
-        return _done(MarkOutcome(OutcomeKind.error, 'No se pudo guardar la marca', e.message));
+        return _done(MarkOutcome(OutcomeKind.error, S.couldNotSave, e.message));
       }
       state = state.copyWith(fix: fix);
       final result = await _flush();
@@ -191,10 +191,9 @@ class WorkerController extends Notifier<WorkerState> {
         _done(_outcomeOf(mark));
         await refresh();
       } else if (result?.failed.isNotEmpty ?? false) {
-        _done(MarkOutcome(OutcomeKind.error, 'Marca no aceptada', result!.failed.first.message));
+        _done(MarkOutcome(OutcomeKind.error, S.notAccepted, result!.failed.first.message));
       } else {
-        _done(MarkOutcome(OutcomeKind.queued, '${type == 'IN' ? 'Llegada' : 'Salida'} guardada sin conexión',
-            'Se enviará automáticamente cuando haya señal. La hora de la marca se conserva.'));
+        _done(MarkOutcome(OutcomeKind.queued, S.savedOffline(type == 'IN'), S.savedOfflineHelp));
       }
     } finally {
       if (ref.mounted && state.marking) state = state.copyWith(marking: false);
@@ -209,13 +208,12 @@ class WorkerController extends Notifier<WorkerState> {
   }
 
   MarkOutcome _outcomeOf(Mark m) {
-    final what = m.isIn ? 'Llegada' : 'Salida';
-    if (!m.accepted) return MarkOutcome(OutcomeKind.rejected, '$what no registrada', m.message);
-    return MarkOutcome(OutcomeKind.accepted, '$what registrada', switch (m.status) {
-      'LATE' => 'Registrada con retraso.',
-      'EARLY_LEAVE' => 'Registrada antes de la hora de salida.',
-      'UNSCHEDULED' => 'Registrada fuera de su turno.',
-      _ => 'A tiempo. ¡Buen trabajo!',
+    if (!m.accepted) return MarkOutcome(OutcomeKind.rejected, S.notRecorded(m.isIn), m.message);
+    return MarkOutcome(OutcomeKind.accepted, S.recorded(m.isIn), switch (m.status) {
+      'LATE' => S.recordedLate,
+      'EARLY_LEAVE' => S.recordedEarly,
+      'UNSCHEDULED' => S.recordedUnscheduled,
+      _ => S.recordedOnTime,
     });
   }
 

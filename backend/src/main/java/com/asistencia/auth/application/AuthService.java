@@ -13,14 +13,14 @@ public class AuthService {
     public static class BadCredentialsException extends RuntimeException {
 
         public BadCredentialsException() {
-            super("Documento o clave incorrectos.");
+            super("Wrong ID or password.");
         }
     }
 
     public static class TooManyAttemptsException extends RuntimeException {
 
         public TooManyAttemptsException() {
-            super("Demasiados intentos. Espere 15 minutos e intente de nuevo.");
+            super("Too many attempts. Wait 15 minutes and try again.");
         }
     }
 

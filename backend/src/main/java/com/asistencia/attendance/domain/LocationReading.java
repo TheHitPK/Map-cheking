@@ -8,10 +8,10 @@ public record LocationReading(GeoPoint point, double accuracyMeters, boolean moc
 
     public LocationReading {
         if (point == null) {
-            throw new InvalidInputException("Ubicación requerida.");
+            throw new InvalidInputException("Location is required.");
         }
         if (!(accuracyMeters >= 0)) {
-            throw new InvalidInputException("Precisión GPS inválida.");
+            throw new InvalidInputException("Invalid GPS accuracy.");
         }
     }
 }

@@ -1,7 +1,14 @@
 import '../../../core/models.dart';
 
 class Employee {
-  const Employee({required this.id, required this.document, required this.fullName, required this.role, required this.active});
+  const Employee({
+    required this.id,
+    required this.document,
+    required this.fullName,
+    required this.role,
+    required this.active,
+    this.hourlyRateCents,
+  });
 
   final int id;
   final String document;
@@ -11,6 +18,9 @@ class Employee {
   final String role;
   final bool active;
 
+  /// Gross pay per hour in US cents; null while not set.
+  final int? hourlyRateCents;
+
   bool get isWorker => role == 'WORKER';
 
   factory Employee.fromJson(Map<String, dynamic> j) => Employee(
@@ -19,6 +29,7 @@ class Employee {
         fullName: j['fullName'] as String,
         role: j['role'] as String,
         active: j['active'] as bool,
+        hourlyRateCents: (j['hourlyRateCents'] as num?)?.toInt(),
       );
 }
 

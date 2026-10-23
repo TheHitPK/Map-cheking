@@ -6,6 +6,7 @@ import '../../../app/theme.dart';
 import '../../../core/format.dart';
 import '../../../core/labels.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 import '../data/supervisor_models.dart';
 import 'supervisor_shell.dart';
@@ -35,18 +36,19 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
       initialDateRange: _range,
       firstDate: DateTime(2024),
       lastDate: DateTime.now(),
-      helpText: 'Período del reporte (máx. 62 días)',
+      helpText: S.reportPeriod,
     );
     if (r != null) setState(() => _range = r);
   }
 
+  /// Tab-separated cell: pastes straight into spreadsheet columns. Neutralizes formula prefixes.
   static String _csvCell(String v) {
-    final s = v.isNotEmpty && '=+-@'.contains(v[0]) ? "'$v" : v;
-    return '"${s.replaceAll('"', '""')}"';
+    final s = v.replaceAll(RegExp(r'[\t\r\n]'), ' ');
+    return s.isNotEmpty && '=+-@'.contains(s[0]) ? "'$s" : s;
   }
 
   Future<void> _copyCsv(List<MarkRow> rows) async {
-    final b = StringBuffer('fecha;hora;cedula;empleado;obra;tipo;estado;motivo;distancia_m;precision_m;sin_conexion\n');
+    final b = StringBuffer('Date\tTime\tEmployee ID\tEmployee\tJob site\tType\tStatus\tReason\tDistance (ft)\tAccuracy (ft)\tOffline\n');
     for (final r in rows) {
       final m = r.mark;
       final local = m.recordedAt.toLocal();
@@ -59,13 +61,13 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
         markTypeLabel(m.type),
         markStatusLabel(m.status).label,
         _csvCell(m.message ?? ''),
-        m.distanceMeters?.round().toString() ?? '',
-        m.accuracyMeters.round().toString(),
-        m.deferred ? 'si' : 'no',
-      ].join(';'));
+        m.distanceMeters == null ? '' : Fmt.metersToFeet(m.distanceMeters!).toString(),
+        Fmt.metersToFeet(m.accuracyMeters).toString(),
+        m.deferred ? 'yes' : 'no',
+      ].join('\t'));
     }
     await Clipboard.setData(ClipboardData(text: b.toString()));
-    if (mounted) showMessage(context, 'CSV copiado (${rows.length} filas). Péguelo en Excel o Google Sheets.');
+    if (mounted) showMessage(context, S.csvCopied(rows.length));
   }
 
   @override
@@ -78,9 +80,9 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
             ? data.where((r) => r.mark.status != 'ON_TIME').toList()
             : data;
     return Scaffold(
-      appBar: SupervisorAppBar(title: 'Reportes', actions: [
+      appBar: SupervisorAppBar(title: S.reportsTitle, actions: [
         IconButton(
-          tooltip: 'Copiar CSV',
+          tooltip: S.copyCsv,
           icon: const Icon(Icons.content_copy_outlined),
           onPressed: filtered == null || filtered.isEmpty ? null : () => _copyCsv(filtered),
         ),
@@ -98,7 +100,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
               ),
               WorksiteFilter(value: _worksiteId, onChanged: (id) => setState(() => _worksiteId = id)),
               FilterChip(
-                label: const Text('Solo incidencias'),
+                label: const Text(S.onlyIssues),
                 avatar: const Icon(Icons.report_gmailerrorred_outlined, size: 18),
                 selected: _onlyIssues,
                 onSelected: (v) => setState(() => _onlyIssues = v),
@@ -110,7 +112,7 @@ class _ReportsPageState extends ConsumerState<ReportsPage> {
           child: switch (rows) {
             AsyncError(:final error) => ErrorState(message: '$error', onRetry: () => ref.invalidate(marksProvider(_query))),
             AsyncData() when filtered!.isEmpty =>
-              const EmptyState(icon: Icons.inbox_outlined, title: 'Sin marcas en este período'),
+              const EmptyState(icon: Icons.inbox_outlined, title: S.noPunchesInPeriod),
             AsyncData() => ListView.builder(
                 padding: const EdgeInsets.fromLTRB(Space.lg, 0, Space.lg, Space.xxl),
                 itemCount: filtered!.length,
@@ -141,7 +143,7 @@ class _MarkRowTile extends StatelessWidget {
         leading: Icon(m.isIn ? Icons.login : Icons.logout),
         title: Text('${row.employeeName} · ${markTypeLabel(m.type)}'),
         subtitle: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-          Text('${Fmt.day(local)} ${Fmt.time(local)} · ${row.worksiteName.isEmpty ? 'Sin obra' : row.worksiteName}'
+          Text('${Fmt.day(local)} ${Fmt.time(local)} · ${row.worksiteName.isEmpty ? S.noSite : row.worksiteName}'
               '${m.distanceMeters == null ? '' : ' · ${Fmt.distance(m.distanceMeters!)}'}'),
           if (m.message != null) Text(m.message!, style: t.textTheme.bodySmall?.copyWith(color: t.colorScheme.error)),
         ]),
@@ -149,7 +151,7 @@ class _MarkRowTile extends StatelessWidget {
           StatusBadge(label: s.label, icon: s.icon, tone: s.tone, dense: true),
           if (m.deferred) ...[
             const SizedBox(height: Space.xs),
-            const StatusBadge(label: 'Sin conexión', icon: Icons.cloud_off_outlined, tone: Tone.neutral, dense: true),
+            const StatusBadge(label: S.offline, icon: Icons.cloud_off_outlined, tone: Tone.neutral, dense: true),
           ],
         ]),
       ),

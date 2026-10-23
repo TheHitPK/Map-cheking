@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 
+import '../core/brand/brand.dart';
+
 /// Spacing scale (4 dp rhythm).
 abstract final class Space {
   static const xs = 4.0;
@@ -70,25 +72,35 @@ extension StatusColorsX on BuildContext {
   StatusColors get status => Theme.of(this).extension<StatusColors>()!;
 }
 
-/// Utilitarian, high-contrast Material 3 theme: readable outdoors in sunlight, large touch targets.
+/// PinPunch theme: Survey Navy + Hi-Vis Orange, high contrast for outdoor use, large touch targets.
 ThemeData buildTheme(Brightness brightness) {
+  final light = brightness == Brightness.light;
   final scheme = ColorScheme.fromSeed(
-    seedColor: const Color(0xFF1E40AF),
+    seedColor: BrandColors.navy,
     brightness: brightness,
-    error: brightness == Brightness.light ? const Color(0xFFB91C1C) : const Color(0xFFF87171),
+    error: light ? const Color(0xFFB91C1C) : const Color(0xFFF87171),
+  ).copyWith(
+    primary: light ? BrandColors.navy : const Color(0xFFA9C7EC),
+    onPrimary: light ? Colors.white : BrandColors.navy,
+    // Orange is the "punch" colour; navy text on it is 5.4:1.
+    tertiary: BrandColors.orange,
+    onTertiary: BrandColors.navy,
+    surface: light ? BrandColors.concrete : null,
   );
   final base = ThemeData(colorScheme: scheme, useMaterial3: true);
   const buttonSize = Size(64, 52);
+  // Derived from the theme's type scale so buttons keep the app font on every platform.
+  final buttonText = base.textTheme.labelLarge?.copyWith(fontSize: 16, fontWeight: FontWeight.w700);
   final shape = RoundedRectangleBorder(borderRadius: BorderRadius.circular(12));
   return base.copyWith(
-    extensions: [brightness == Brightness.light ? StatusColors.light : StatusColors.dark],
+    extensions: [light ? StatusColors.light : StatusColors.dark],
     scaffoldBackgroundColor: scheme.surface,
     textTheme: base.textTheme.apply(bodyColor: scheme.onSurface, displayColor: scheme.onSurface),
     filledButtonTheme: FilledButtonThemeData(
-      style: FilledButton.styleFrom(minimumSize: buttonSize, shape: shape, textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      style: FilledButton.styleFrom(minimumSize: buttonSize, shape: shape, textStyle: buttonText),
     ),
     outlinedButtonTheme: OutlinedButtonThemeData(
-      style: OutlinedButton.styleFrom(minimumSize: buttonSize, shape: shape, textStyle: const TextStyle(fontSize: 16, fontWeight: FontWeight.w600)),
+      style: OutlinedButton.styleFrom(minimumSize: buttonSize, shape: shape, textStyle: buttonText),
     ),
     textButtonTheme: TextButtonThemeData(style: TextButton.styleFrom(minimumSize: const Size(48, 48))),
     inputDecorationTheme: InputDecorationTheme(

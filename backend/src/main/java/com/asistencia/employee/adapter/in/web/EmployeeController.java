@@ -21,19 +21,21 @@ import org.springframework.web.bind.annotation.RestController;
 @RequestMapping("/employees")
 public class EmployeeController {
 
-    /** Never exposes the password hash. */
-    public record EmployeeDto(long id, String document, String fullName, Role role, boolean active) {
+    /** Never exposes the password hash. {@code hourlyRateCents}: US cents, null while not set. */
+    public record EmployeeDto(long id, String document, String fullName, Role role, boolean active,
+                              Integer hourlyRateCents) {
 
         public static EmployeeDto of(Employee e) {
-            return new EmployeeDto(e.id(), e.document(), e.fullName(), e.role(), e.active());
+            return new EmployeeDto(e.id(), e.document(), e.fullName(), e.role(), e.active(), e.hourlyRateCents());
         }
     }
 
     public record CreateRequest(@NotBlank String document, @NotBlank String fullName, @NotNull Role role,
-                                @NotBlank String password) {
+                                @NotBlank String password, Integer hourlyRateCents) {
     }
 
-    public record UpdateRequest(@NotBlank String fullName, @NotNull Role role, @NotNull Boolean active) {
+    public record UpdateRequest(@NotBlank String fullName, @NotNull Role role, @NotNull Boolean active,
+                                Integer hourlyRateCents) {
     }
 
     public record PasswordRequest(@NotBlank String password) {
@@ -53,12 +55,13 @@ public class EmployeeController {
     @PostMapping
     @ResponseStatus(HttpStatus.CREATED)
     public EmployeeDto create(@Valid @RequestBody CreateRequest req) {
-        return EmployeeDto.of(employees.create(req.document(), req.fullName(), req.role(), req.password()));
+        return EmployeeDto.of(employees.create(req.document(), req.fullName(), req.role(), req.password(),
+                req.hourlyRateCents()));
     }
 
     @PutMapping("/{id}")
     public EmployeeDto update(@PathVariable long id, @Valid @RequestBody UpdateRequest req) {
-        return EmployeeDto.of(employees.update(id, req.fullName(), req.role(), req.active()));
+        return EmployeeDto.of(employees.update(id, req.fullName(), req.role(), req.active(), req.hourlyRateCents()));
     }
 
     @PutMapping("/{id}/password")

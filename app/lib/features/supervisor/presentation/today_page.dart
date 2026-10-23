@@ -8,6 +8,7 @@ import '../../../core/format.dart';
 import '../../../core/labels.dart';
 import '../../../core/models.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 import '../data/supervisor_models.dart';
 import 'supervisor_shell.dart';
@@ -59,8 +60,8 @@ class _TodayPageState extends ConsumerState<TodayPage> {
     final rows = ref.watch(dailyProvider(_query));
     final isToday = DateUtils.isSameDay(_date, DateTime.now());
     return Scaffold(
-      appBar: SupervisorAppBar(title: isToday ? 'Asistencia de hoy' : 'Asistencia', actions: [
-        IconButton(tooltip: 'Actualizar', icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(dailyProvider(_query))),
+      appBar: SupervisorAppBar(title: isToday ? S.todayTitle : S.attendanceTitle, actions: [
+        IconButton(tooltip: S.refresh, icon: const Icon(Icons.refresh), onPressed: () => ref.invalidate(dailyProvider(_query))),
       ]),
       body: RefreshIndicator(
         onRefresh: () => ref.refresh(dailyProvider(_query).future),
@@ -74,7 +75,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
                   OutlinedButton.icon(
                     onPressed: _pickDate,
                     icon: const Icon(Icons.calendar_today_outlined),
-                    label: Text(isToday ? 'Hoy, ${Fmt.day(_date)}' : Fmt.day(_date)),
+                    label: Text(isToday ? S.todayDate(Fmt.day(_date)) : Fmt.day(_date)),
                   ),
                   WorksiteFilter(value: _worksiteId, onChanged: (id) => setState(() => _worksiteId = id)),
                 ]),
@@ -102,8 +103,8 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           hasScrollBody: false,
           child: EmptyState(
             icon: Icons.event_note_outlined,
-            title: 'No hay trabajadores con horario',
-            message: 'Asigne un horario y una obra a cada trabajador en la sección Personal.',
+            title: S.noScheduledCrew,
+            message: S.noScheduledCrewHelp,
           ),
         ),
       ];
@@ -125,7 +126,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
           child: Padding(
             padding: const EdgeInsets.all(Space.lg),
             child: Wrap(spacing: Space.sm, runSpacing: Space.sm, children: [
-              _CountChip(label: 'En obra', icon: Icons.engineering_outlined, count: onSite, selected: _stateFilter == 'ON_SITE',
+              _CountChip(label: S.onSiteBadge, icon: Icons.engineering_outlined, count: onSite, selected: _stateFilter == 'ON_SITE',
                   onTap: () => _toggle('ON_SITE')),
               for (final s in const ['ON_TIME', 'LATE', 'ABSENT', 'PENDING'])
                 _CountChip(
@@ -140,7 +141,7 @@ class _TodayPageState extends ConsumerState<TodayPage> {
         ),
       ),
       if (rows.isEmpty)
-        const SliverToBoxAdapter(child: EmptyState(icon: Icons.filter_alt_off_outlined, title: 'Nadie en este filtro')),
+        const SliverToBoxAdapter(child: EmptyState(icon: Icons.filter_alt_off_outlined, title: S.nobodyInFilter)),
       SliverList.builder(
         itemCount: rows.length,
         itemBuilder: (_, i) => MaxWidth(
@@ -197,24 +198,24 @@ class _DailyCard extends StatelessWidget {
           Expanded(
             child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text(row.fullName, style: t.textTheme.titleMedium),
-              Text('${row.worksiteName} · turno ${Fmt.hhmm(row.shiftStart)}–${Fmt.hhmm(row.shiftEnd)}',
+              Text(S.shiftLine(row.worksiteName, Fmt.apiTime(row.shiftStart), Fmt.apiTime(row.shiftEnd)),
                   style: t.textTheme.bodyMedium?.copyWith(color: t.colorScheme.onSurfaceVariant)),
               const SizedBox(height: Space.sm),
               Wrap(spacing: Space.lg, runSpacing: Space.xs, children: [
-                _TimeLabel(label: 'Llegada', mark: row.inMark),
-                _TimeLabel(label: 'Salida', mark: row.outMark),
+                _TimeLabel(label: S.inLabel, mark: row.inMark),
+                _TimeLabel(label: S.outLabel, mark: row.outMark),
               ]),
               const SizedBox(height: Space.sm),
               Wrap(spacing: Space.sm, runSpacing: Space.xs, children: [
                 StatusBadge(label: state.label, icon: state.icon, tone: state.tone, dense: true),
-                if (row.onSite) const StatusBadge(label: 'En obra', icon: Icons.engineering_outlined, tone: Tone.info, dense: true),
+                if (row.onSite) const StatusBadge(label: S.onSiteBadge, icon: Icons.engineering_outlined, tone: Tone.info, dense: true),
                 if (row.earlyLeave)
-                  const StatusBadge(label: 'Salida anticipada', icon: Icons.directions_walk, tone: Tone.warning, dense: true),
+                  const StatusBadge(label: S.leftEarly, icon: Icons.directions_walk, tone: Tone.warning, dense: true),
                 if (row.inMark?.deferred ?? false)
-                  const StatusBadge(label: 'Llegada sin conexión', icon: Icons.cloud_off_outlined, tone: Tone.neutral, dense: true),
+                  const StatusBadge(label: S.arrivedOffline, icon: Icons.cloud_off_outlined, tone: Tone.neutral, dense: true),
                 if (row.rejectedAttempts > 0)
                   StatusBadge(
-                    label: row.rejectedAttempts == 1 ? '1 intento rechazado' : '${row.rejectedAttempts} intentos rechazados',
+                    label: S.rejectedAttempts(row.rejectedAttempts),
                     icon: Icons.report_gmailerrorred_outlined,
                     tone: Tone.danger,
                     dense: true,

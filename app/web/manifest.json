@@ -1,11 +1,11 @@
 {
-    "name": "Asistencia · Supervisor",
-    "short_name": "Asistencia",
+    "name": "PinPunch",
+    "short_name": "PinPunch",
     "start_url": ".",
     "display": "standalone",
-    "background_color": "#0175C2",
-    "theme_color": "#0175C2",
-    "description": "Control de asistencia por GPS en obra.",
+    "background_color": "#F5F3EE",
+    "theme_color": "#0B2545",
+    "description": "GPS time clock for construction crews.",
     "orientation": "portrait-primary",
     "prefer_related_applications": false,
     "icons": [

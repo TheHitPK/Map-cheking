@@ -69,17 +69,17 @@ public class AttendanceController {
         return queries.marks(from, to, worksiteId).stream().map(MarkRowDto::of).toList();
     }
 
-    /** Same data as CSV (UTF-8 with BOM so Excel opens accents correctly; times in the official zone). */
+    /** Same data as CSV (comma-separated, UTF-8 with BOM so Excel opens accents correctly; times in the official zone). */
     @GetMapping(value = "/marks", produces = "text/csv")
     public ResponseEntity<byte[]> marksCsv(@RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
                                            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to,
                                            @RequestParam(required = false) Long worksiteId) {
         DateTimeFormatter fmt = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss").withZone(zone);
         StringBuilder csv = new StringBuilder("﻿");
-        csv.append("fecha_hora;documento;empleado;obra;tipo;estado;motivo;distancia_m;precision_m;diferida\r\n");
+        csv.append("date_time,employee_id,employee,job_site,type,status,reason,distance_m,accuracy_m,offline\r\n");
         for (MarkRow r : queries.marks(from, to, worksiteId)) {
             AttendanceMark m = r.mark();
-            csv.append(String.join(";",
+            csv.append(String.join(",",
                     fmt.format(m.recordedAt()),
                     cell(r.employeeDocument()),
                     cell(r.employeeName()),
@@ -89,9 +89,9 @@ public class AttendanceController {
                     m.rejection() == null ? "" : m.rejection().name(),
                     m.distanceMeters() == null ? "" : Long.toString(Math.round(m.distanceMeters())),
                     Long.toString(Math.round(m.location().accuracyMeters())),
-                    m.deferred() ? "si" : "no")).append("\r\n");
+                    m.deferred() ? "yes" : "no")).append("\r\n");
         }
-        String filename = "asistencia_" + from + "_" + to + ".csv";
+        String filename = "pinpunch_" + from + "_" + to + ".csv";
         return ResponseEntity.ok()
                 .contentType(new MediaType(TEXT_CSV, StandardCharsets.UTF_8))
                 .header(HttpHeaders.CONTENT_DISPOSITION, "attachment; filename=\"" + filename + "\"")

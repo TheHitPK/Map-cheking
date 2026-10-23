@@ -5,6 +5,7 @@ import '../../../app/theme.dart';
 import '../../../core/format.dart';
 import '../../../core/models.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 import '../data/supervisor_models.dart';
 import 'employee_editor_page.dart';
@@ -36,11 +37,11 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
     final shifts = {for (final s in ref.watch(shiftsProvider).value ?? const <Shift>[]) s.employeeId: s};
     final sites = <int, String>{for (final w in ref.watch(worksitesProvider).value ?? const <Worksite>[]) w.id: w.name};
     return Scaffold(
-      appBar: const SupervisorAppBar(title: 'Personal'),
+      appBar: const SupervisorAppBar(title: S.navCrew),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: _open,
         icon: const Icon(Icons.person_add_alt_outlined),
-        label: const Text('Nuevo empleado'),
+        label: const Text(S.newCrewMember),
       ),
       body: switch (employees) {
         AsyncData(:final value) => Column(children: [
@@ -49,7 +50,7 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
               child: Padding(
                 padding: const EdgeInsets.all(Space.lg),
                 child: TextField(
-                  decoration: const InputDecoration(labelText: 'Buscar por nombre o cédula', prefixIcon: Icon(Icons.search)),
+                  decoration: const InputDecoration(labelText: S.searchCrew, prefixIcon: Icon(Icons.search)),
                   onChanged: (v) => setState(() => _query = v.trim().toLowerCase()),
                 ),
               ),
@@ -69,8 +70,8 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
     if (list.isEmpty) {
       return EmptyState(
         icon: Icons.groups_outlined,
-        title: _query.isEmpty ? 'Aún no hay empleados' : 'Sin resultados',
-        message: _query.isEmpty ? 'Registre a sus trabajadores y asígneles obra y horario.' : null,
+        title: _query.isEmpty ? S.noCrew : S.noResults,
+        message: _query.isEmpty ? S.noCrewHelp : null,
       );
     }
     return RefreshIndicator(
@@ -86,10 +87,10 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
           final e = list[i];
           final s = shifts[e.id];
           final schedule = !e.isWorker
-              ? 'Supervisor'
+              ? S.supervisor
               : s == null
-                  ? 'Sin horario asignado'
-                  : '${sites[s.worksiteId] ?? 'Obra'} · ${Fmt.hhmm(s.start)}–${Fmt.hhmm(s.end)} · ${Fmt.days(s.days)}';
+                  ? S.noSchedule
+                  : '${sites[s.worksiteId] ?? S.jobSite} · ${Fmt.apiTime(s.start)}–${Fmt.apiTime(s.end)} · ${Fmt.days(s.days)}';
           return MaxWidth(
             width: 900,
             child: Card(
@@ -99,9 +100,9 @@ class _EmployeesPageState extends ConsumerState<EmployeesPage> {
                 title: Text(e.fullName),
                 subtitle: Text('${e.document} · $schedule'),
                 trailing: Row(mainAxisSize: MainAxisSize.min, children: [
-                  if (!e.active) const StatusBadge(label: 'Inactivo', icon: Icons.block, tone: Tone.neutral, dense: true),
+                  if (!e.active) const StatusBadge(label: S.inactiveMember, icon: Icons.block, tone: Tone.neutral, dense: true),
                   if (e.active && e.isWorker && s == null)
-                    const StatusBadge(label: 'Sin horario', icon: Icons.warning_amber_outlined, tone: Tone.warning, dense: true),
+                    const StatusBadge(label: S.noScheduleShort, icon: Icons.warning_amber_outlined, tone: Tone.warning, dense: true),
                   const Icon(Icons.chevron_right),
                 ]),
                 onTap: () => _open(e),

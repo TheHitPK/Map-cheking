@@ -21,6 +21,8 @@ class Session {
 
   bool get expired => DateTime.now().isAfter(expiresAt);
 
+  bool get isWorker => role == 'WORKER';
+
   factory Session.fromJson(Map<String, dynamic> j) => Session(
         token: j['token'] as String,
         expiresAt: DateTime.parse(j['expiresAt'] as String),

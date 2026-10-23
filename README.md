@@ -1,11 +1,11 @@
-# Asistencia GPS
+# PinPunch
 
-Control de llegada y salida de trabajadores en obra. El trabajador marca desde su teléfono; el servidor verifica
+GPS time clock for construction crews (US). El trabajador marca desde su teléfono; el servidor verifica
 por GPS que esté dentro del radio de la obra y clasifica la marca según su horario.
 
 ```
 backend/   Spring Boot 4 (Java 21), arquitectura hexagonal, PostgreSQL
-app/       Flutter: flavors trabajador / supervisor (el supervisor también en web)
+app/       Flutter: una app; el rol al iniciar sesión decide (empleado: marcar + mi pago; supervisor: panel, también web)
 docker-compose.yml   postgres + backend
 ```
 
@@ -23,9 +23,8 @@ Apps:
 
 ```sh
 cd app
-flutter run --flavor trabajador -t lib/main_trabajador.dart          # Android
-flutter run --flavor supervisor -t lib/main_supervisor.dart          # Android
-flutter run -d chrome -t lib/main_supervisor.dart                    # Web
+flutter run                 # Android (empleado o supervisor según quién inicia sesión)
+flutter run -d chrome       # Web (solo supervisores)
 # Otro servidor: --dart-define=API_URL=https://api.example.com
 ```
 
@@ -36,7 +35,10 @@ flutter run -d chrome -t lib/main_supervisor.dart                    # Web
 2. El trabajador abre la app, ve si está dentro de la obra y toca **Marcar llegada** / **Marcar salida**.
 3. El servidor acepta la marca o la rechaza (fuera de la obra, GPS impreciso o simulado, secuencia inválida…).
    Los rechazos también se guardan para auditoría.
-4. El supervisor ve en **Hoy** quién llegó, tarde, ausente o en obra, y en **Reportes** exporta CSV.
+. **Nómina** semanal (lunes a domingo): horas de cada empleado por pares entrada/salida aceptados, extras a 1.5× sobre
+   40 h, por su tarifa por hora. El supervisor revisa la semana en **Payroll** y la marca como pagada (los montos quedan
+   congelados); el empleado ve en **My pay** su próximo cheque, cuándo llega (viernes siguiente) y su historial.
+   Montos brutos, sin impuestos.
 
 ## Reglas
 

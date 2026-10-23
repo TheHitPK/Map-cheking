@@ -4,8 +4,9 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import '../../app/config.dart';
+import '../strings.dart';
 
-/// Failure with a message fit for the UI (Spanish). [statusCode] is null for network errors.
+/// Failure with a message fit for the UI. [statusCode] is null for network errors.
 class ApiException implements Exception {
   ApiException(this.message, {this.statusCode});
 
@@ -53,9 +54,9 @@ class ApiClient {
     try {
       res = await http.Response.fromStream(await _http.send(req).timeout(AppConfig.requestTimeout));
     } on TimeoutException {
-      throw ApiException('El servidor no responde. Revise su conexión.');
+      throw ApiException(S.serverSlow);
     } catch (_) {
-      throw ApiException('Sin conexión con el servidor.');
+      throw ApiException(S.noConnection);
     }
     final text = utf8.decode(res.bodyBytes);
     final decoded = text.isEmpty ? null : _tryJson(text);
@@ -74,12 +75,12 @@ class ApiClient {
   static String _message(int status, dynamic body) {
     if (body is Map && body['detail'] is String) return body['detail'] as String;
     return switch (status) {
-      401 => 'Su sesión expiró. Inicie sesión de nuevo.',
-      403 => 'No tiene permiso para esta acción.',
-      404 => 'No encontrado.',
-      429 => 'Demasiados intentos. Espere unos minutos.',
-      >= 500 => 'Error del servidor. Intente más tarde.',
-      _ => 'Solicitud rechazada ($status).',
+      401 => S.sessionExpired,
+      403 => S.noPermission,
+      404 => S.notFound,
+      429 => S.tooManyAttempts,
+      >= 500 => S.serverError,
+      _ => S.rejected(status),
     };
   }
 }

@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 
-/// "Todas las obras" or one worksite.
+/// "All job sites" or one job site.
 class WorksiteFilter extends ConsumerWidget {
   const WorksiteFilter({super.key, required this.value, required this.onChanged});
 
@@ -19,12 +20,12 @@ class WorksiteFilter extends ConsumerWidget {
         initialValue: value,
         isExpanded: true,
         decoration: const InputDecoration(
-          labelText: 'Obra',
+          labelText: S.jobSite,
           prefixIcon: Icon(Icons.location_city_outlined),
           isDense: true,
         ),
         items: [
-          const DropdownMenuItem<int?>(value: null, child: Text('Todas las obras')),
+          const DropdownMenuItem<int?>(value: null, child: Text(S.allSites)),
           for (final w in sites) DropdownMenuItem<int?>(value: w.id, child: Text(w.name, overflow: TextOverflow.ellipsis)),
         ],
         onChanged: onChanged,

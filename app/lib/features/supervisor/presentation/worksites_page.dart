@@ -2,8 +2,10 @@ import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
 
 import '../../../app/theme.dart';
+import '../../../core/format.dart';
 import '../../../core/models.dart';
 import '../../../core/widgets/common.dart';
+import '../../../core/strings.dart';
 import '../data/supervisor_api.dart';
 import 'supervisor_shell.dart';
 import 'worksite_editor_page.dart';
@@ -22,19 +24,19 @@ class WorksitesPage extends ConsumerWidget {
   Widget build(BuildContext context, WidgetRef ref) {
     final sites = ref.watch(worksitesProvider);
     return Scaffold(
-      appBar: const SupervisorAppBar(title: 'Obras'),
+      appBar: const SupervisorAppBar(title: S.navSites),
       floatingActionButton: FloatingActionButton.extended(
         onPressed: () => _open(context, ref),
         icon: const Icon(Icons.add_location_alt_outlined),
-        label: const Text('Nueva obra'),
+        label: const Text(S.newSite),
       ),
       body: switch (sites) {
         AsyncData(value: final list) when list.isEmpty => EmptyState(
             icon: Icons.location_city_outlined,
-            title: 'Aún no hay obras',
-            message: 'Cree una obra marcando su ubicación en el mapa y el radio permitido para marcar.',
+            title: S.noSites,
+            message: S.noSitesHelp,
             action: FilledButton.icon(
-                onPressed: () => _open(context, ref), icon: const Icon(Icons.add), label: const Text('Crear la primera obra')),
+                onPressed: () => _open(context, ref), icon: const Icon(Icons.add), label: const Text(S.createFirstSite)),
           ),
         AsyncData(value: final list) => RefreshIndicator(
             onRefresh: () => ref.refresh(worksitesProvider.future),
@@ -51,11 +53,11 @@ class WorksitesPage extends ConsumerWidget {
                     title: Text(list[i].name),
                     subtitle: Text([
                       if (list[i].address.isNotEmpty) list[i].address,
-                      'Radio ${list[i].radiusMeters} m',
+                      S.radius(Fmt.distance(list[i].radiusMeters.toDouble())),
                     ].join(' · ')),
                     trailing: Row(mainAxisSize: MainAxisSize.min, children: [
                       if (!list[i].active)
-                        const StatusBadge(label: 'Inactiva', icon: Icons.pause_circle_outline, tone: Tone.neutral, dense: true),
+                        const StatusBadge(label: S.inactive, icon: Icons.pause_circle_outline, tone: Tone.neutral, dense: true),
                       const Icon(Icons.chevron_right),
                     ]),
                     onTap: () => _open(context, ref, list[i]),
